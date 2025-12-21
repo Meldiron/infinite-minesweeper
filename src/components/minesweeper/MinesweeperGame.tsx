@@ -112,6 +112,7 @@ export function MinesweeperGame({
   // Track drag state for click prevention
   const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null)
   const hasDraggedRef = useRef(false)
+  const dragButtonRef = useRef<number | null>(null)
 
   const saveGame = useServerFn(saveGameFn)
   const deleteGameSave = useServerFn(deleteGameSaveFn)
@@ -581,6 +582,7 @@ export function MinesweeperGame({
         // Track mouse down position for drag detection
         mouseDownPosRef.current = { x: e.clientX, y: e.clientY }
         hasDraggedRef.current = false
+        dragButtonRef.current = 0
       }
     },
     [offset],
@@ -599,7 +601,7 @@ export function MinesweeperGame({
 
       if (isDragging) {
         // Check if we've moved enough to consider it a drag
-        if (mouseDownPosRef.current) {
+        if (mouseDownPosRef.current && dragButtonRef.current === 0) {
           const dx = Math.abs(e.clientX - mouseDownPosRef.current.x)
           const dy = Math.abs(e.clientY - mouseDownPosRef.current.y)
           if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
@@ -616,9 +618,18 @@ export function MinesweeperGame({
     [isDragging, dragStart],
   )
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
-    mouseDownPosRef.current = null
+  const handleMouseUp = useCallback((e: React.MouseEvent) => {
+    // Only reset drag state if left button was released
+    if (e.button === 0) {
+      setIsDragging(false)
+      mouseDownPosRef.current = null
+      dragButtonRef.current = null
+      // Reset hasDragged after a microtask to allow the click event to check it first
+      // But we need to reset it so subsequent clicks work
+      setTimeout(() => {
+        hasDraggedRef.current = false
+      }, 0)
+    }
   }, [])
 
   const handleMouseLeave = useCallback(() => {
@@ -626,12 +637,13 @@ export function MinesweeperGame({
     setMousePos(null)
     mouseDownPosRef.current = null
     hasDraggedRef.current = false
+    dragButtonRef.current = null
   }, [])
 
   // Check if a click should be allowed (not after a drag)
   const shouldAllowClick = useCallback(() => {
+    // If we just finished dragging with left button, block the click
     if (hasDraggedRef.current) {
-      hasDraggedRef.current = false
       return false
     }
     return true
