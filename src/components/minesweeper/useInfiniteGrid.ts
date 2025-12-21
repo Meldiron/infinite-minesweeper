@@ -158,7 +158,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
     [cellStates, getKey],
   )
 
-  // Check if a sector is complete (all cells correctly revealed or flagged)
+  // Check if a sector is complete (all non-mine cells revealed, mines either flagged or exploded)
   const checkSectorComplete = useCallback(
     (
       sectorX: number,
@@ -177,8 +177,8 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
           const isMine = hasMine(x, y)
 
           if (isMine) {
-            // Mine cells must be flagged
-            if (!state?.flagged) return false
+            // Mine cells must be either flagged or exploded (clicked)
+            if (!state?.flagged && !state?.exploded) return false
           } else {
             // Non-mine cells must be revealed
             if (!state?.revealed) return false
@@ -381,6 +381,9 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
           })
           setCellStates(newStates)
 
+          // Check for sector completion after mine explosion
+          updateCompletedSectors(newStates, [[cx, cy]])
+
           // Lose a life
           const newLives = lives - 1
           setLives(newLives)
@@ -433,6 +436,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
       getCellState,
       updateCompletedSectors,
       lives,
+      lastDamageTime,
     ],
   )
 
