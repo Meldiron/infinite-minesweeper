@@ -6,6 +6,7 @@ import {
   Grid3X3,
   Move,
   Heart,
+  Download,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,6 +34,8 @@ type GameControlsProps = {
   lives: number
   maxLives: number
   timeUntilNextLife: number | null
+  onExportPNG?: () => void
+  isAtMinZoom?: boolean
 }
 
 function formatTime(ms: number): string {
@@ -53,117 +56,135 @@ export function GameControls({
   lives,
   maxLives,
   timeUntilNextLife,
+  onExportPNG,
+  isAtMinZoom,
 }: GameControlsProps) {
   return (
-    <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-4 pointer-events-none z-10">
-      {/* Left side - Game info */}
-      <div className="flex items-center gap-4 pointer-events-auto">
-        <div className="bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 flex items-center gap-4">
-          {/* Lives display */}
-          <div className="flex items-center gap-1">
-            {Array.from({ length: maxLives }).map((_, i) => (
-              <Heart
-                key={i}
-                size={18}
-                className={
-                  i < lives ? 'text-red-500 fill-red-500' : 'text-stone-500'
-                }
-              />
-            ))}
-            {timeUntilNextLife !== null && lives < maxLives && (
-              <span className="ml-2 font-mono text-xs text-stone-400">
-                +1 in {formatTime(timeUntilNextLife)}
+    <div className="absolute top-4 left-4 right-4 flex flex-col gap-2 pointer-events-none z-10">
+      {/* First row */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* Left side - Game info */}
+        <div className="flex items-center gap-4 pointer-events-auto">
+          <div className="bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 flex items-center gap-4">
+            {/* Lives display */}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: maxLives }).map((_, i) => (
+                <Heart
+                  key={i}
+                  size={18}
+                  className={
+                    i < lives ? 'text-red-500 fill-red-500' : 'text-stone-500'
+                  }
+                />
+              ))}
+              {timeUntilNextLife !== null && lives < maxLives && (
+                <span className="ml-2 font-mono text-xs text-stone-400">
+                  +1 in {formatTime(timeUntilNextLife)}
+                </span>
+              )}
+            </div>
+            <div className="w-px h-5 bg-stone-600" />
+            <div className="flex items-center gap-2">
+              <Grid3X3 size={18} className="text-stone-300" />
+              <span className="font-mono text-sm font-medium">
+                {revealedCount}
               </span>
-            )}
-          </div>
-          <div className="w-px h-5 bg-stone-600" />
-          <div className="flex items-center gap-2">
-            <Grid3X3 size={18} className="text-stone-300" />
-            <span className="font-mono text-sm font-medium">
-              {revealedCount}
-            </span>
-          </div>
-          <div className="w-px h-5 bg-stone-600" />
-          <div className="flex items-center gap-2">
-            <Flag size={18} className="text-red-500" />
-            <span className="font-mono text-sm font-medium">
-              {flaggedCount}
-            </span>
+            </div>
+            <div className="w-px h-5 bg-stone-600" />
+            <div className="flex items-center gap-2">
+              <Flag size={18} className="text-red-500" />
+              <span className="font-mono text-sm font-medium">
+                {flaggedCount}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Right side - Controls */}
-      <div className="flex items-center gap-2 pointer-events-auto">
-        <div className="bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg p-1 flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onZoomOut}
-            className="h-8 w-8 hover:bg-stone-700"
-            title="Zoom out"
-          >
-            <ZoomOut size={18} />
-          </Button>
-          <span className="font-mono text-sm w-14 text-center">
-            {Math.round(zoom * 100)}%
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onZoomIn}
-            className="h-8 w-8 hover:bg-stone-700"
-            title="Zoom in"
-          >
-            <ZoomIn size={18} />
-          </Button>
-        </div>
-
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onResetView}
-          className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0"
-          title="Reset view"
-        >
-          <Move size={18} />
-        </Button>
-
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+        {/* Right side - Controls */}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <div className="bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg p-1 flex items-center gap-1">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0"
-              title="New game"
+              onClick={onZoomOut}
+              className="h-8 w-8 hover:bg-stone-700"
+              title="Zoom out"
             >
-              <RotateCcw size={18} />
+              <ZoomOut size={18} />
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="bg-stone-900 border-stone-700">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-stone-100">
-                Start New Game?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-stone-400">
-                This will reset all your progress and start a fresh game. This
-                action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="bg-stone-800 text-stone-100 border-stone-600 hover:bg-stone-700 hover:text-stone-100">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={onReset}
-                className="bg-red-600 text-white hover:bg-red-700"
+            <span className="font-mono text-sm w-14 text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onZoomIn}
+              className="h-8 w-8 hover:bg-stone-700"
+              title="Zoom in"
+            >
+              <ZoomIn size={18} />
+            </Button>
+          </div>
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onResetView}
+            className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0"
+            title="Reset view"
+          >
+            <Move size={18} />
+          </Button>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0"
+                title="New game"
               >
-                Reset Game
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+                <RotateCcw size={18} />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-stone-900 border-stone-700">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-stone-100">
+                  Start New Game?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-stone-400">
+                  This will reset all your progress and start a fresh game. This
+                  action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="bg-stone-800 text-stone-100 border-stone-600 hover:bg-stone-700 hover:text-stone-100">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={onReset}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  Reset Game
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
+
+      {/* Second row - Export button (only at min zoom) */}
+      {isAtMinZoom && onExportPNG && (
+        <div className="flex justify-end">
+          <Button
+            onClick={onExportPNG}
+            className="bg-stone-900/95 hover:bg-stone-800 text-stone-100 backdrop-blur-sm shadow-lg border-0 gap-2 pointer-events-auto"
+          >
+            <Download size={16} />
+            Export Map as PNG
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

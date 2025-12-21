@@ -6,8 +6,7 @@ import {
   SECTOR_SIZE,
   type SectorState,
 } from './useInfiniteGrid'
-import { Heart, MapPin, Download } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Heart, MapPin } from 'lucide-react'
 
 const BASE_CELL_SIZE = 32
 const MIN_ZOOM = 0.05
@@ -413,6 +412,8 @@ export function MinesweeperGame() {
         lives={lives}
         maxLives={maxLives}
         timeUntilNextLife={timeUntilNextLife}
+        onExportPNG={handleExportPNG}
+        isAtMinZoom={isAtMinZoom}
       />
 
       <GameInstructions />
@@ -426,19 +427,6 @@ export function MinesweeperGame() {
               Sector ({sectorUnderCursor.x}, {sectorUnderCursor.y})
             </span>
           </div>
-        </div>
-      )}
-
-      {/* Export button at 5% zoom */}
-      {isAtMinZoom && (
-        <div className="absolute bottom-4 left-4 z-10">
-          <Button
-            onClick={handleExportPNG}
-            className="bg-stone-900/95 hover:bg-stone-800 text-stone-100 backdrop-blur-sm shadow-lg border-0 gap-2"
-          >
-            <Download size={16} />
-            Export Map as PNG
-          </Button>
         </div>
       )}
 
