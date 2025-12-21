@@ -230,7 +230,15 @@ export function GameInstructions({
           <HelpCircle size={18} />
         </Button>
       ) : (
-        <div className="bg-stone-900/95 text-stone-300 backdrop-blur-sm rounded-lg shadow-lg px-4 py-3 text-sm">
+        <div
+          className="bg-stone-900/95 text-stone-300 backdrop-blur-sm rounded-lg shadow-lg px-4 py-3 text-sm md:cursor-default cursor-pointer"
+          onClick={() => {
+            // Only collapse on mobile (when button is hidden)
+            if (window.innerWidth < 768) {
+              onToggleCollapse()
+            }
+          }}
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
               <span>
@@ -246,8 +254,11 @@ export function GameInstructions({
             <Button
               variant="ghost"
               size="icon"
-              onClick={onToggleCollapse}
-              className="h-6 w-6 -mr-2 -mt-1 hover:bg-stone-700 text-stone-400 hover:text-stone-100"
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleCollapse()
+              }}
+              className="h-6 w-6 -mr-2 -mt-1 hover:bg-stone-700 text-stone-400 hover:text-stone-100 hidden md:flex"
               title="Hide instructions"
             >
               <ChevronDown size={16} />
