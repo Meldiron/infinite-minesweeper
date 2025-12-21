@@ -31,6 +31,13 @@ const EXPORT_CHUNK_SIZE = 50 // Process 50 rows at a time to prevent freezing
 const AUTO_SAVE_DELAY = 3000 // 3 seconds of inactivity before auto-save
 const PREFERENCES_SAVE_DELAY = 1000 // 1 second delay for preferences
 
+// Detect mobile during initialization (before hooks are available)
+const getInitialZoom = () => {
+  if (typeof window === 'undefined') return 1
+  const isMobileDevice = window.matchMedia('(max-width: 768px)').matches
+  return isMobileDevice ? 1.2 : 1
+}
+
 function formatTime(ms: number): string {
   const totalSeconds = Math.ceil(ms / 1000)
   const minutes = Math.floor(totalSeconds / 60)
@@ -61,10 +68,8 @@ export function MinesweeperGame({
     () => initialSave?.seed ?? Math.floor(Math.random() * 1000000),
   )
 
-  // Initialize zoom and offset from preferences first, then fall back to save, then defaults
-  const [zoom, setZoom] = useState(
-    () => initialPreferences?.zoomLevel ?? initialSave?.zoomLevel ?? 1,
-  )
+  // Always default zoom to 100% on desktop, 120% on mobile
+  const [zoom, setZoom] = useState(getInitialZoom)
   const [offset, setOffset] = useState(() => ({
     x: initialPreferences?.viewportOffsetX ?? initialSave?.viewportOffsetX ?? 0,
     y: initialPreferences?.viewportOffsetY ?? initialSave?.viewportOffsetY ?? 0,
