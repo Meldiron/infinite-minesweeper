@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { Cell, type MobileInteractionMode } from './Cell'
 import {
   GameControls,
@@ -65,6 +66,7 @@ export function MinesweeperGame({
   initialSave,
   initialPreferences,
 }: MinesweeperGameProps) {
+  const navigate = useNavigate()
   const [seed] = useState(
     () => initialSave?.seed ?? Math.floor(Math.random() * 1000000),
   )
@@ -700,6 +702,11 @@ export function MinesweeperGame({
     window.location.reload()
   }, [resetGame, deleteGameSave])
 
+  // Sign out handler
+  const handleSignOut = useCallback(() => {
+    navigate({ to: '/sign-out' })
+  }, [navigate])
+
   // Sector colors based on state (dark theme only)
   const getSectorColors = (state: SectorState): string => {
     switch (state) {
@@ -750,6 +757,7 @@ export function MinesweeperGame({
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onReset={handleReset}
+        onSignOut={handleSignOut}
         onResetView={handleResetView}
         gameState={gameState}
         revealedCount={revealedCount}

@@ -14,6 +14,7 @@ import {
   Grid3X3,
   Move,
   Unlock,
+  LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -37,6 +38,7 @@ type GameControlsProps = {
   onZoomIn: () => void
   onZoomOut: () => void
   onReset: () => void
+  onSignOut: () => void
   gameState: GameState
   revealedCount: number
   onResetView: () => void
@@ -60,6 +62,7 @@ export function GameControls({
   onZoomIn,
   onZoomOut,
   onReset,
+  onSignOut,
   revealedCount,
   onResetView,
   lives,
@@ -178,6 +181,16 @@ export function GameControls({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onSignOut}
+            className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0 hover:bg-red-900/80 hover:text-red-200"
+            title="Sign out"
+          >
+            <LogOut size={18} />
+          </Button>
         </div>
       </div>
 
