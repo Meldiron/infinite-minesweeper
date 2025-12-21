@@ -195,7 +195,7 @@ export function GameControls({
                   </div>
                   <Progress
                     value={exportProgress}
-                    className="h-1.5 bg-stone-700"
+                    className="h-1.5 bg-stone-700 [&_[data-slot=progress-indicator]]:bg-amber-500"
                   />
                 </div>
               </div>
