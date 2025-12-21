@@ -313,7 +313,7 @@ export function SaveIndicator({
   const status = getStatusInfo()
 
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+    <div className="absolute top-4 right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-10">
       <button
         onClick={onForceSave}
         disabled={isSaving || (!isDirty && !error)}
