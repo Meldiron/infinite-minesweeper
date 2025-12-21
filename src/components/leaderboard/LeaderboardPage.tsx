@@ -18,6 +18,7 @@ import {
   Loader2,
   ChevronDown,
   Users,
+  Zap,
 } from 'lucide-react'
 import {
   getLeaderboardFn,
@@ -263,13 +264,25 @@ export function LeaderboardPage() {
           </CardContent>
         </Card>
 
-        {/* Back to Game CTA */}
-        <div className="mt-6 text-center">
-          <Link to="/play">
-            <Button className="bg-amber-600 hover:bg-amber-700 text-white">
-              Play Now
-            </Button>
-          </Link>
+        {/* Ready to Begin CTA */}
+        <div className="mt-6">
+          <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-2xl p-10 border border-amber-800/30 text-center">
+            <Zap size={40} className="text-amber-500 mx-auto mb-4" />
+            <h2 className="text-3xl font-bold text-stone-100 mb-4">
+              Ready to Begin?
+            </h2>
+            <p className="text-stone-400 mb-8">
+              Join thousands of players exploring the infinite grid.
+            </p>
+            <Link to="/sign-up">
+              <Button
+                size="lg"
+                className="bg-amber-600 hover:bg-amber-700 text-white px-10"
+              >
+                Create Free Account
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
