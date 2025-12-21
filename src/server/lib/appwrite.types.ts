@@ -11,6 +11,8 @@ export type MinesweeperSaves = Models.Row & {
   viewportOffsetY: number | null
   zoomLevel: number | null
   seed: number | null
+  healthRegenTimestamp: string | null
+  health: number | null
 }
 
 export type UserPreferences = Models.Row & {

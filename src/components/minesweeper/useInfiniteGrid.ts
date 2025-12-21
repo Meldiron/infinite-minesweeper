@@ -70,6 +70,8 @@ export type SerializableGameState = {
   isFirstClick: boolean
   gameOver: boolean
   seed: number
+  health: number | null
+  healthRegenTimestamp: string | null
 }
 
 // Helper to serialize Map to JSON string
@@ -117,6 +119,8 @@ export type InitialSaveData = {
   viewportOffsetY?: number | null
   zoomLevel?: number | null
   seed?: number | null
+  health?: number | null
+  healthRegenTimestamp?: string | null
 } | null
 
 export function useInfiniteGrid(
@@ -133,7 +137,15 @@ export function useInfiniteGrid(
   })
 
   const [gameState, setGameState] = useState<GameState>(() => {
+    // Check if game should be in waiting state (either gameOver flag or no lives)
     if (initialSave?.gameOver) return 'waiting'
+    if (
+      initialSave?.health !== undefined &&
+      initialSave?.health !== null &&
+      initialSave.health <= 0
+    ) {
+      return 'waiting'
+    }
     return 'playing'
   })
 
@@ -161,8 +173,26 @@ export function useInfiniteGrid(
     return 0
   })
 
-  const [lives, setLives] = useState(MAX_LIVES)
-  const [lastDamageTime, setLastDamageTime] = useState<number | null>(null)
+  // Initialize lives from save data, default to MAX_LIVES
+  const [lives, setLives] = useState(() => {
+    if (initialSave?.health !== undefined && initialSave?.health !== null) {
+      return initialSave.health
+    }
+    return MAX_LIVES
+  })
+
+  // Initialize lastDamageTime from save data (stored as ISO string)
+  const [lastDamageTime, setLastDamageTime] = useState<number | null>(() => {
+    if (initialSave?.healthRegenTimestamp) {
+      const timestamp = new Date(initialSave.healthRegenTimestamp).getTime()
+      // Validate the timestamp is reasonable (not NaN and not in the future by too much)
+      if (!isNaN(timestamp)) {
+        return timestamp
+      }
+    }
+    return null
+  })
+
   const [timeUntilNextLife, setTimeUntilNextLife] = useState<number | null>(
     null,
   )
@@ -187,6 +217,69 @@ export function useInfiniteGrid(
   // Track if state has changed since last save
   const [isDirty, setIsDirty] = useState(false)
   const [lastSaveTime, setLastSaveTime] = useState<number | null>(null)
+
+  // Track initial mount to avoid marking dirty on load
+  const isInitialHealthMountRef = useRef(true)
+
+  // Track if offline regeneration has been processed
+  const hasProcessedOfflineRegenRef = useRef(false)
+
+  // Mark as dirty when health state changes (but not on initial mount)
+  useEffect(() => {
+    if (isInitialHealthMountRef.current) {
+      isInitialHealthMountRef.current = false
+      return
+    }
+    setIsDirty(true)
+  }, [lives, lastDamageTime])
+
+  // Handle health regeneration that occurred while game was closed
+  useEffect(() => {
+    // Only run once
+    if (hasProcessedOfflineRegenRef.current) return
+    hasProcessedOfflineRegenRef.current = true
+
+    if (
+      !initialSave?.healthRegenTimestamp ||
+      initialSave?.health === undefined ||
+      initialSave?.health === null
+    ) {
+      return
+    }
+
+    const savedTimestamp = new Date(initialSave.healthRegenTimestamp).getTime()
+    if (isNaN(savedTimestamp)) return
+
+    const now = Date.now()
+    const timePassed = now - savedTimestamp
+
+    // Calculate how many lives should have regenerated
+    const livesRegenerated = Math.floor(timePassed / REGEN_INTERVAL_MS)
+
+    if (livesRegenerated > 0) {
+      const newLives = Math.min(
+        MAX_LIVES,
+        initialSave.health + livesRegenerated,
+      )
+      setLives(newLives)
+
+      if (newLives >= MAX_LIVES) {
+        // Fully healed, clear the damage time
+        setLastDamageTime(null)
+        setGameState('playing')
+      } else {
+        // Still regenerating, update the timestamp to account for partial progress
+        const remainingTime = timePassed % REGEN_INTERVAL_MS
+        setLastDamageTime(now - remainingTime)
+        if (newLives > 0) {
+          setGameState('playing')
+        }
+      }
+
+      // Mark as dirty since we updated health
+      setIsDirty(true)
+    }
+  }, [initialSave])
 
   // Health regeneration effect
   useEffect(() => {
@@ -682,8 +775,20 @@ export function useInfiniteGrid(
       isFirstClick: isFirstClickRef.current,
       gameOver: gameState === 'waiting',
       seed,
+      health: lives,
+      healthRegenTimestamp: lastDamageTime
+        ? new Date(lastDamageTime).toISOString()
+        : null,
     }
-  }, [cellStates, completedSectors, gameState, removedMines, seed])
+  }, [
+    cellStates,
+    completedSectors,
+    gameState,
+    removedMines,
+    seed,
+    lives,
+    lastDamageTime,
+  ])
 
   // Mark as saved
   const markAsSaved = useCallback(() => {
