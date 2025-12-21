@@ -463,8 +463,8 @@ export function MinesweeperGame() {
         <div className="absolute bottom-4 right-4 bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 pointer-events-none z-10">
           <div className="flex items-center gap-2">
             <MapPin size={16} className="text-amber-500" />
-            <span className="font-mono text-sm">
-              Sector ({sectorUnderCursor.x}, {sectorUnderCursor.y})
+            <span className="font-mono">
+              {sectorUnderCursor.x}, {sectorUnderCursor.y}
             </span>
           </div>
         </div>
