@@ -222,7 +222,7 @@ export function GameInstructions({
   onToggleCollapse: () => void
 }) {
   return (
-    <div className="absolute bottom-4 left-4 z-10 pointer-events-auto">
+    <div className="absolute bottom-4 left-4 z-50 md:z-10 pointer-events-auto">
       {isCollapsed ? (
         <Button
           variant="outline"
@@ -253,6 +253,9 @@ export function GameInstructions({
               </span>
               <span>
                 <strong>Scroll</strong> to zoom • <strong>Drag</strong> to pan
+              </span>
+              <span className="text-stone-500 text-xs mt-1 md:hidden">
+                Tap to close
               </span>
             </div>
             <Button
