@@ -9,7 +9,7 @@ import {
 import { Heart } from 'lucide-react'
 
 const BASE_CELL_SIZE = 32
-const MIN_ZOOM = 0.25
+const MIN_ZOOM = 0.01
 const MAX_ZOOM = 2
 const ZOOM_STEP = 0.1
 const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
