@@ -6,13 +6,15 @@ import {
   SECTOR_SIZE,
   type SectorState,
 } from './useInfiniteGrid'
-import { Heart, MapPin } from 'lucide-react'
+import { Heart, MapPin, Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const BASE_CELL_SIZE = 32
 const MIN_ZOOM = 0.05
 const MAX_ZOOM = 2
 const ZOOM_STEP = 0.1
 const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
+const EXPORT_MAX_SIZE = 5000 // Maximum export size in pixels
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.ceil(ms / 1000)
@@ -84,6 +86,62 @@ export function MinesweeperGame() {
 
     return { x: sectorX, y: sectorY }
   }, [mousePos, offset, cellSize])
+
+  // Export board as PNG (1 pixel per sector, max 5000x5000, centered at 0,0)
+  const handleExportPNG = useCallback(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = EXPORT_MAX_SIZE
+    canvas.height = EXPORT_MAX_SIZE
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // Fill with untouched color (dark gray)
+    ctx.fillStyle = '#44403c' // stone-700
+    ctx.fillRect(0, 0, EXPORT_MAX_SIZE, EXPORT_MAX_SIZE)
+
+    // Calculate sector range (centered at 0,0)
+    const halfSize = Math.floor(EXPORT_MAX_SIZE / 2)
+    const minSectorX = -halfSize
+    const minSectorY = -halfSize
+
+    // Color mapping for sector states
+    const sectorColors: Record<SectorState, string> = {
+      untouched: '#44403c', // stone-700
+      'in-progress': '#b45309', // amber-700
+      finished: '#15803d', // green-700
+    }
+
+    // Draw each sector as a single pixel
+    for (let py = 0; py < EXPORT_MAX_SIZE; py++) {
+      for (let px = 0; px < EXPORT_MAX_SIZE; px++) {
+        const sectorX = minSectorX + px
+        const sectorY = minSectorY + py
+        const state = getSectorState(sectorX, sectorY)
+
+        // Only draw if not untouched (untouched is already the background)
+        if (state !== 'untouched') {
+          ctx.fillStyle = sectorColors[state]
+          ctx.fillRect(px, py, 1, 1)
+        }
+      }
+    }
+
+    // Convert to PNG and download
+    canvas.toBlob((blob) => {
+      if (!blob) return
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `minesweeper-map-${Date.now()}.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 'image/png')
+  }, [getSectorState])
+
+  // Check if at minimum zoom (5%)
+  const isAtMinZoom = zoom <= 0.05
 
   // Calculate visible cells (only when not in sector view)
   const visibleCells = useMemo(() => {
@@ -368,6 +426,19 @@ export function MinesweeperGame() {
               Sector ({sectorUnderCursor.x}, {sectorUnderCursor.y})
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Export button at 5% zoom */}
+      {isAtMinZoom && (
+        <div className="absolute bottom-4 left-4 z-10">
+          <Button
+            onClick={handleExportPNG}
+            className="bg-stone-900/95 hover:bg-stone-800 text-stone-100 backdrop-blur-sm shadow-lg border-0 gap-2"
+          >
+            <Download size={16} />
+            Export Map as PNG
+          </Button>
         </div>
       )}
 
