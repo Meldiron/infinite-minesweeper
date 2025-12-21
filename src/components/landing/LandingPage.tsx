@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
-import { Grid3X3, Infinity, Heart, Save, Zap } from 'lucide-react'
+import { Grid3X3, Infinity, Heart, Save, Zap, Trophy } from 'lucide-react'
 
 export function LandingPage() {
   return (
@@ -42,6 +42,16 @@ export function LandingPage() {
                   className="bg-white hover:bg-stone-100 text-stone-900 border-white px-8 py-6 text-lg"
                 >
                   Sign In
+                </Button>
+              </Link>
+              <Link to="/leaderboard">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="bg-transparent hover:bg-stone-700 text-stone-100 border-stone-600 px-8 py-6 text-lg"
+                >
+                  <Trophy size={20} className="mr-2" />
+                  Leaderboard
                 </Button>
               </Link>
             </div>

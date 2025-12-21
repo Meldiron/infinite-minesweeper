@@ -116,6 +116,26 @@ export const completeOnboardingFn = createServerFn({ method: 'POST' })
             onboardingCompleted: true,
           },
         )
+
+        // Also update userStats nickname
+        const existingStats = await db.userStats.list([
+          Query.equal('createdBy', [currentUser.$id]),
+          Query.limit(1),
+        ])
+
+        if (existingStats.rows.length > 0) {
+          await db.userStats.update(existingStats.rows[0].$id, {
+            nickname,
+          })
+        } else {
+          // Create userStats if it doesn't exist
+          await db.userStats.create({
+            createdBy: currentUser.$id,
+            nickname,
+            tilesOpened: 0,
+          })
+        }
+
         return {
           success: true,
           onboardingId: updated.$id,
@@ -127,6 +147,26 @@ export const completeOnboardingFn = createServerFn({ method: 'POST' })
           nickname,
           onboardingCompleted: true,
         })
+
+        // Also create userStats record for leaderboard
+        const existingStats = await db.userStats.list([
+          Query.equal('createdBy', [currentUser.$id]),
+          Query.limit(1),
+        ])
+
+        if (existingStats.rows.length === 0) {
+          await db.userStats.create({
+            createdBy: currentUser.$id,
+            nickname,
+            tilesOpened: 0,
+          })
+        } else {
+          // Update nickname if stats already exist
+          await db.userStats.update(existingStats.rows[0].$id, {
+            nickname,
+          })
+        }
+
         return {
           success: true,
           onboardingId: created.$id,

@@ -29,3 +29,9 @@ export type UserOnboarding = Models.Row & {
   nickname: string
   onboardingCompleted: boolean
 }
+
+export type UserStats = Models.Row & {
+  createdBy: string
+  nickname: string
+  tilesOpened: number
+}

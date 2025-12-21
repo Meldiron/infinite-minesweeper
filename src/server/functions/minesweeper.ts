@@ -28,6 +28,24 @@ const savePreferencesSchema = z.object({
   zoomLevel: z.number().nullable(),
 })
 
+// Helper function to count revealed cells from cellStates JSON
+function countRevealedCells(cellStatesJson: string): number {
+  try {
+    const cellStates = JSON.parse(cellStatesJson)
+    let count = 0
+    for (const key in cellStates) {
+      const state = cellStates[key]
+      // Count cells that are revealed (not hidden and not flagged)
+      if (state === 'revealed' || state === 'mine') {
+        count++
+      }
+    }
+    return count
+  } catch {
+    return 0
+  }
+}
+
 // Get the current user's preferences
 export const getUserPreferencesFn = createServerFn({ method: 'GET' }).handler(
   async () => {
@@ -167,6 +185,23 @@ export const saveGameFn = createServerFn({ method: 'POST' })
     }
 
     try {
+      // Count revealed cells for leaderboard stats
+      const revealedCount = countRevealedCells(data.cellStates)
+
+      // Update user stats for leaderboard
+      const existingStats = await db.userStats.list([
+        Query.equal('createdBy', [currentUser.$id]),
+        Query.limit(1),
+      ])
+
+      if (existingStats.rows.length > 0) {
+        // Update tilesOpened count
+        await db.userStats.update(existingStats.rows[0].$id, {
+          tilesOpened: revealedCount,
+        })
+      }
+      // Note: If stats don't exist, they'll be created during onboarding
+
       // Check if user already has a save
       const existing = await db.minesweeperSaves.list([
         Query.equal('createdBy', [currentUser.$id]),
@@ -237,6 +272,18 @@ export const deleteGameSaveFn = createServerFn({ method: 'POST' }).handler(
 
       if (existing.rows.length > 0) {
         await db.minesweeperSaves.delete(existing.rows[0].$id)
+      }
+
+      // Reset tilesOpened count in user stats
+      const existingStats = await db.userStats.list([
+        Query.equal('createdBy', [currentUser.$id]),
+        Query.limit(1),
+      ])
+
+      if (existingStats.rows.length > 0) {
+        await db.userStats.update(existingStats.rows[0].$id, {
+          tilesOpened: 0,
+        })
       }
 
       return { success: true }

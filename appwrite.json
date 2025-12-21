@@ -266,6 +266,64 @@
           "orders": ["ASC"]
         }
       ]
+    },
+    {
+      "$id": "user_stats",
+      "$permissions": [
+        "create(\"any\")",
+        "read(\"any\")",
+        "update(\"any\")",
+        "delete(\"any\")"
+      ],
+      "databaseId": "imagine-project-db",
+      "name": "user_stats",
+      "enabled": true,
+      "documentSecurity": true,
+      "attributes": [
+        {
+          "key": "createdBy",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 64,
+          "default": null,
+          "encrypt": false
+        },
+        {
+          "key": "nickname",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 32,
+          "default": null,
+          "encrypt": false
+        },
+        {
+          "key": "tilesOpened",
+          "type": "integer",
+          "required": true,
+          "array": false,
+          "min": null,
+          "max": null,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "idx_createdBy",
+          "type": "key",
+          "status": "available",
+          "attributes": ["createdBy"],
+          "orders": ["ASC"]
+        },
+        {
+          "key": "idx_tilesOpened",
+          "type": "key",
+          "status": "available",
+          "attributes": ["tilesOpened"],
+          "orders": ["DESC"]
+        }
+      ]
     }
   ]
 }

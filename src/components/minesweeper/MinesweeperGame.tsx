@@ -707,6 +707,11 @@ export function MinesweeperGame({
     navigate({ to: '/sign-out' })
   }, [navigate])
 
+  // Leaderboard handler
+  const handleLeaderboard = useCallback(() => {
+    navigate({ to: '/leaderboard' })
+  }, [navigate])
+
   // Sector colors based on state (dark theme only)
   const getSectorColors = (state: SectorState): string => {
     switch (state) {
@@ -758,6 +763,7 @@ export function MinesweeperGame({
         onZoomOut={handleZoomOut}
         onReset={handleReset}
         onSignOut={handleSignOut}
+        onLeaderboard={handleLeaderboard}
         onResetView={handleResetView}
         gameState={gameState}
         revealedCount={revealedCount}

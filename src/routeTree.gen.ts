@@ -13,6 +13,7 @@ import { Route as PublicRouteImport } from './routes/_public'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as PublicLeaderboardRouteImport } from './routes/_public/leaderboard'
 import { Route as ProtectedPlayRouteImport } from './routes/_protected/play'
 import { Route as ProtectedOnboardingRouteImport } from './routes/_protected/onboarding'
 import { Route as ProtectedExampleProtectedRouteRouteImport } from './routes/_protected/example-protected-route'
@@ -36,6 +37,11 @@ const AuthRoute = AuthRouteImport.update({
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicLeaderboardRoute = PublicLeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => PublicRoute,
 } as any)
 const ProtectedPlayRoute = ProtectedPlayRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/example-protected-route': typeof ProtectedExampleProtectedRouteRoute
   '/onboarding': typeof ProtectedOnboardingRoute
   '/play': typeof ProtectedPlayRoute
+  '/leaderboard': typeof PublicLeaderboardRoute
   '/': typeof PublicIndexRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/example-protected-route': typeof ProtectedExampleProtectedRouteRoute
   '/onboarding': typeof ProtectedOnboardingRoute
   '/play': typeof ProtectedPlayRoute
+  '/leaderboard': typeof PublicLeaderboardRoute
   '/': typeof PublicIndexRoute
 }
 export interface FileRoutesById {
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/_protected/example-protected-route': typeof ProtectedExampleProtectedRouteRoute
   '/_protected/onboarding': typeof ProtectedOnboardingRoute
   '/_protected/play': typeof ProtectedPlayRoute
+  '/_public/leaderboard': typeof PublicLeaderboardRoute
   '/_public/': typeof PublicIndexRoute
 }
 export interface FileRouteTypes {
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/example-protected-route'
     | '/onboarding'
     | '/play'
+    | '/leaderboard'
     | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/example-protected-route'
     | '/onboarding'
     | '/play'
+    | '/leaderboard'
     | '/'
   id:
     | '__root__'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/_protected/example-protected-route'
     | '/_protected/onboarding'
     | '/_protected/play'
+    | '/_public/leaderboard'
     | '/_public/'
   fileRoutesById: FileRoutesById
 }
@@ -180,6 +192,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/leaderboard': {
+      id: '/_public/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof PublicLeaderboardRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_protected/play': {
@@ -265,10 +284,12 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
 )
 
 interface PublicRouteChildren {
+  PublicLeaderboardRoute: typeof PublicLeaderboardRoute
   PublicIndexRoute: typeof PublicIndexRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
+  PublicLeaderboardRoute: PublicLeaderboardRoute,
   PublicIndexRoute: PublicIndexRoute,
 }
 

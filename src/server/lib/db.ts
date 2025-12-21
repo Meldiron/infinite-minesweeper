@@ -10,6 +10,7 @@ import type {
   MinesweeperSaves,
   UserPreferences,
   UserOnboarding,
+  UserStats,
 } from './appwrite.types'
 
 const client = new Client()
@@ -161,6 +162,54 @@ export const db = {
       tablesDB.listRows<UserOnboarding>({
         databaseId: process.env.APPWRITE_DB_ID!,
         tableId: 'user_onboarding',
+        queries,
+      }),
+  },
+  userStats: {
+    create: (
+      data: Omit<UserStats, keyof Models.Row>,
+      options?: { rowId?: string; permissions?: string[] },
+    ) =>
+      tablesDB.createRow<UserStats>({
+        databaseId: process.env.APPWRITE_DB_ID!,
+        tableId: 'user_stats',
+        rowId: options?.rowId ?? ID.unique(),
+        data,
+        permissions: [
+          Permission.write(Role.user(data.createdBy)),
+          Permission.read(Role.user(data.createdBy)),
+          Permission.update(Role.user(data.createdBy)),
+          Permission.delete(Role.user(data.createdBy)),
+        ],
+      }),
+    get: (id: string) =>
+      tablesDB.getRow<UserStats>({
+        databaseId: process.env.APPWRITE_DB_ID!,
+        tableId: 'user_stats',
+        rowId: id,
+      }),
+    update: (
+      id: string,
+      data: Partial<Omit<UserStats, keyof Models.Row>>,
+      options?: { permissions?: string[] },
+    ) =>
+      tablesDB.updateRow<UserStats>({
+        databaseId: process.env.APPWRITE_DB_ID!,
+        tableId: 'user_stats',
+        rowId: id,
+        data,
+        ...(options?.permissions ? { permissions: options.permissions } : {}),
+      }),
+    delete: (id: string) =>
+      tablesDB.deleteRow({
+        databaseId: process.env.APPWRITE_DB_ID!,
+        tableId: 'user_stats',
+        rowId: id,
+      }),
+    list: (queries?: string[]) =>
+      tablesDB.listRows<UserStats>({
+        databaseId: process.env.APPWRITE_DB_ID!,
+        tableId: 'user_stats',
         queries,
       }),
   },

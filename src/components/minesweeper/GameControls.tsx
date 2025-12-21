@@ -15,6 +15,7 @@ import {
   Move,
   Unlock,
   LogOut,
+  Trophy,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -39,6 +40,7 @@ type GameControlsProps = {
   onZoomOut: () => void
   onReset: () => void
   onSignOut: () => void
+  onLeaderboard: () => void
   gameState: GameState
   revealedCount: number
   onResetView: () => void
@@ -63,6 +65,7 @@ export function GameControls({
   onZoomOut,
   onReset,
   onSignOut,
+  onLeaderboard,
   revealedCount,
   onResetView,
   lives,
@@ -109,6 +112,16 @@ export function GameControls({
               </span>
             </div>
           </div>
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onLeaderboard}
+            className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0 hover:bg-amber-900/80 hover:text-amber-200"
+            title="Leaderboard"
+          >
+            <Trophy size={18} />
+          </Button>
         </div>
 
         {/* Right side - Controls */}
