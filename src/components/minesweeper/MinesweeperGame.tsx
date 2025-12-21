@@ -92,7 +92,7 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
   // Trigger flash effect for long-press feedback
   const triggerFlash = useCallback(() => {
     setShowFlash(true)
-    setTimeout(() => setShowFlash(false), 200)
+    setTimeout(() => setShowFlash(false), 300)
   }, [])
 
   // Prevent body scroll on mobile when game is mounted
@@ -594,8 +594,8 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
         <div
           className="absolute inset-0 z-[100] pointer-events-none"
           style={{
-            boxShadow: 'inset 0 0 60px 30px rgba(255, 255, 255, 0.6)',
-            animation: 'flash-fade 200ms ease-out forwards',
+            boxShadow: 'inset 0 0 60px 30px rgba(255, 255, 255, 0.35)',
+            animation: 'flash-fade 300ms ease-out forwards',
           }}
         />
       )}
