@@ -28,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Progress } from '@/components/ui/progress'
+import { Switch } from '@/components/ui/switch'
 import type { GameState } from './useInfiniteGrid'
 import type { MobileInteractionMode } from './Cell'
 
@@ -363,32 +364,21 @@ export function MobileInteractionToggle({
 }) {
   return (
     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-auto md:hidden">
-      <button
-        onClick={onToggle}
-        className="bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 flex items-center gap-3"
-      >
-        <div className="flex items-center gap-2">
-          <MousePointer
-            size={14}
-            className={mode === 'default' ? 'text-amber-400' : 'text-stone-500'}
-          />
-          <span className="text-xs text-stone-400">Tap</span>
-          <span className="text-sm font-medium">
-            {mode === 'default' ? 'Open' : 'Flag'}
-          </span>
-        </div>
-        <div className="w-px h-4 bg-stone-600" />
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-stone-400">Hold</span>
-          <span className="text-sm font-medium">
-            {mode === 'default' ? 'Flag' : 'Open'}
-          </span>
-          <Flag
-            size={14}
-            className={mode === 'default' ? 'text-stone-500' : 'text-amber-400'}
-          />
-        </div>
-      </button>
+      <div className="bg-stone-900/95 backdrop-blur-sm rounded-lg shadow-lg px-3 py-2 flex items-center gap-2">
+        <Flag
+          size={16}
+          className={mode === 'reverse' ? 'text-amber-400' : 'text-stone-500'}
+        />
+        <Switch
+          checked={mode === 'default'}
+          onCheckedChange={onToggle}
+          className="data-[state=checked]:bg-amber-500 data-[state=unchecked]:bg-amber-500"
+        />
+        <MousePointer
+          size={16}
+          className={mode === 'default' ? 'text-amber-400' : 'text-stone-500'}
+        />
+      </div>
     </div>
   )
 }
