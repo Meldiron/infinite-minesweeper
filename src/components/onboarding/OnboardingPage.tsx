@@ -1,10 +1,16 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from '@tanstack/react-router'
-import { motion } from 'motion/react'
-import { User, Loader2, Check, X } from 'lucide-react'
+import { Loader2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   checkNicknameAvailableFn,
   completeOnboardingFn,
@@ -127,46 +133,22 @@ export function OnboardingPage() {
   const inputStatus = getInputStatus()
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center p-4"
-      style={{
-        background:
-          'linear-gradient(135deg, #1A1F2C 0%, #2D1F3D 50%, #1A1F2C 100%)',
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
-          {/* Header */}
-          <div className="mb-8 text-center">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{
-                delay: 0.2,
-                type: 'spring',
-                stiffness: 200,
-              }}
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500"
-            >
-              <User className="h-8 w-8 text-white" />
-            </motion.div>
-            <h1 className="mb-2 text-2xl font-bold text-white">Welcome!</h1>
-            <p className="text-sm text-white/60">
-              Choose a nickname to get started
-            </p>
-          </div>
-
-          {/* Form */}
+    <div className="h-screen w-screen flex items-center justify-center bg-stone-900 p-6">
+      <Card className="w-full max-w-md bg-stone-800 border-stone-700">
+        <CardHeader className="text-center">
+          <CardTitle className="text-lg md:text-2xl text-stone-100">
+            Welcome!
+          </CardTitle>
+          <CardDescription className="text-sm md:text-base text-stone-400">
+            Choose a nickname to get started
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label
                 htmlFor="nickname"
-                className="text-sm font-medium text-white/80"
+                className="text-sm font-medium text-stone-300"
               >
                 Nickname
               </Label>
@@ -179,7 +161,7 @@ export function OnboardingPage() {
                   placeholder="Enter your nickname"
                   maxLength={32}
                   disabled={isSubmitting}
-                  className={`h-12 border-white/20 bg-white/5 pr-10 text-white placeholder:text-white/40 focus:border-purple-500 focus:ring-purple-500/20 ${
+                  className={`h-12 pr-10 bg-stone-700 border-stone-600 text-stone-100 placeholder:text-stone-500 focus:border-amber-500 focus:ring-amber-500/20 ${
                     inputStatus === 'error'
                       ? 'border-red-500/50'
                       : inputStatus === 'available'
@@ -189,7 +171,7 @@ export function OnboardingPage() {
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {inputStatus === 'checking' && (
-                    <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+                    <Loader2 className="h-5 w-5 animate-spin text-stone-400" />
                   )}
                   {inputStatus === 'available' && (
                     <Check className="h-5 w-5 text-green-500" />
@@ -199,30 +181,16 @@ export function OnboardingPage() {
                   )}
                 </div>
               </div>
-              {error && (
-                <motion.p
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-red-400"
-                >
-                  {error}
-                </motion.p>
-              )}
+              {error && <p className="text-sm text-red-400">{error}</p>}
               {isAvailable && !error && (
-                <motion.p
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-green-400"
-                >
-                  Nickname is available!
-                </motion.p>
+                <p className="text-sm text-green-400">Nickname is available!</p>
               )}
             </div>
 
             <Button
               type="submit"
               disabled={isSubmitting || isChecking || !isAvailable || !!error}
-              className="h-12 w-full bg-gradient-to-r from-purple-600 to-pink-600 font-semibold text-white transition-all hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
+              className="h-12 w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
@@ -235,12 +203,11 @@ export function OnboardingPage() {
             </Button>
           </form>
 
-          {/* Footer hint */}
-          <p className="mt-6 text-center text-xs text-white/40">
+          <p className="mt-6 text-center text-xs text-stone-500">
             Your nickname will be visible to other players
           </p>
-        </div>
-      </motion.div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
