@@ -42,6 +42,7 @@ type CellProps = {
   sectorComplete: boolean
   isMobile?: boolean
   mobileMode?: MobileInteractionMode
+  onLongPressAction?: () => void
 }
 
 export const Cell = memo(function Cell({
@@ -57,6 +58,7 @@ export const Cell = memo(function Cell({
   sectorComplete,
   isMobile = false,
   mobileMode = 'default',
+  onLongPressAction,
 }: CellProps) {
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPressRef = useRef(false)
@@ -108,6 +110,9 @@ export const Cell = memo(function Cell({
       longPressTimerRef.current = setTimeout(() => {
         isLongPressRef.current = true
 
+        // Trigger flash effect
+        onLongPressAction?.()
+
         // Long press action based on mode
         if (mobileMode === 'default') {
           // Default: long press = flag
@@ -132,6 +137,7 @@ export const Cell = memo(function Cell({
       onReveal,
       x,
       y,
+      onLongPressAction,
     ],
   )
 

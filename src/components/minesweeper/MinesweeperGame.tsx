@@ -61,6 +61,7 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [mobileMode, setMobileMode] = useState<MobileInteractionMode>('default')
+  const [showFlash, setShowFlash] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isMobile = useIsMobile()
@@ -87,6 +88,12 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
     getSerializableState,
     markAsSaved,
   } = useInfiniteGrid(seed, 0.15, initialSave)
+
+  // Trigger flash effect for long-press feedback
+  const triggerFlash = useCallback(() => {
+    setShowFlash(true)
+    setTimeout(() => setShowFlash(false), 200)
+  }, [])
 
   // Prevent body scroll on mobile when game is mounted
   useEffect(() => {
@@ -582,6 +589,27 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
 
   return (
     <div className="relative w-full h-screen bg-stone-800 overflow-hidden select-none touch-none">
+      {/* Long-press flash effect */}
+      {showFlash && (
+        <div
+          className="absolute inset-0 z-[100] pointer-events-none"
+          style={{
+            boxShadow: 'inset 0 0 60px 30px rgba(255, 255, 255, 0.6)',
+            animation: 'flash-fade 200ms ease-out forwards',
+          }}
+        />
+      )}
+      <style>{`
+        @keyframes flash-fade {
+          0% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+      `}</style>
+
       <GameControls
         zoom={zoom}
         onZoomIn={handleZoomIn}
@@ -710,6 +738,7 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
                   sectorComplete={sectorComplete}
                   isMobile={isMobile}
                   mobileMode={mobileMode}
+                  onLongPressAction={triggerFlash}
                 />
               )
             })}
