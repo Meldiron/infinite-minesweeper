@@ -31,12 +31,15 @@ const savePreferencesSchema = z.object({
 // Helper function to count revealed cells from cellStates JSON
 function countRevealedCells(cellStatesJson: string): number {
   try {
-    const cellStates = JSON.parse(cellStatesJson)
+    const cellStates = JSON.parse(cellStatesJson) as Record<
+      string,
+      { revealed: boolean; flagged: boolean; exploded?: boolean }
+    >
     let count = 0
     for (const key in cellStates) {
       const state = cellStates[key]
-      // Count cells that are revealed (not hidden and not flagged)
-      if (state === 'revealed' || state === 'mine') {
+      // Count cells that are revealed (including exploded mines, but not flagged-only cells)
+      if (state && state.revealed === true) {
         count++
       }
     }
