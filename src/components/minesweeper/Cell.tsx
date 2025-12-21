@@ -72,15 +72,15 @@ export const Cell = memo(function Cell({
 
   // Theme-based styles
   const revealedBg = isDark
-    ? 'bg-stone-700 border-stone-600'
-    : 'bg-stone-200 border-stone-300'
+    ? 'bg-stone-800 border-stone-700'
+    : 'bg-stone-400 border-stone-500'
   const mineBg = isDark
-    ? 'bg-stone-600 border-stone-500'
-    : 'bg-stone-300 border-stone-400'
+    ? 'bg-stone-700 border-stone-600'
+    : 'bg-stone-500 border-stone-600'
   const unrevealedBg = isDark
-    ? 'bg-gradient-to-br from-stone-500 to-stone-600 border-t-2 border-l-2 border-stone-400 border-r-2 border-b-2 border-r-stone-700 border-b-stone-700 hover:from-stone-450 hover:to-stone-550'
-    : 'bg-gradient-to-br from-stone-300 to-stone-400 border-t-2 border-l-2 border-white border-r-2 border-b-2 border-r-stone-500 border-b-stone-500 hover:from-stone-350 hover:to-stone-450'
-  const bombIconColor = isDark ? 'text-stone-300' : 'text-stone-800'
+    ? 'bg-gradient-to-br from-stone-700 to-stone-800 border-t-2 border-l-2 border-stone-600 border-r-2 border-b-2 border-r-stone-900 border-b-stone-900 hover:from-stone-650 hover:to-stone-750'
+    : 'bg-gradient-to-br from-stone-500 to-stone-600 border-t-2 border-l-2 border-stone-400 border-r-2 border-b-2 border-r-stone-700 border-b-stone-700 hover:from-stone-450 hover:to-stone-550'
+  const bombIconColor = isDark ? 'text-stone-400' : 'text-stone-900'
 
   // Revealed cell
   if (state.revealed) {
@@ -160,7 +160,7 @@ export const Cell = memo(function Cell({
   // Unrevealed cell
   return (
     <div
-      className={`absolute flex items-center justify-center cursor-pointer ${unrevealedBg} active:bg-stone-400 active:border transition-colors`}
+      className={`absolute flex items-center justify-center cursor-pointer ${unrevealedBg} active:bg-stone-600 active:border transition-colors`}
       style={{
         width: size - 1,
         height: size - 1,
