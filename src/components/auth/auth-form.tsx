@@ -36,12 +36,17 @@ export function AuthForm<T extends FieldValues>({
         {children(form)}
 
         {form.formState.errors.root && (
-          <div className="text-sm font-medium text-destructive">
+          <div className="text-sm font-medium text-red-400">
             {form.formState.errors.root.message}
           </div>
         )}
 
-        <Button type="submit" size="sm" className="w-full" disabled={isLoading}>
+        <Button
+          type="submit"
+          size="sm"
+          className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+          disabled={isLoading}
+        >
           {isLoading ? (
             <div className="flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
