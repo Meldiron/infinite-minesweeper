@@ -123,7 +123,7 @@ export function GameControls({
                 </TooltipTrigger>
                 <TooltipContent
                   side="bottom"
-                  className="bg-stone-800 text-stone-100 border-stone-700"
+                  className="bg-stone-900/95 text-stone-100 border-stone-700 backdrop-blur-sm [&>svg]:fill-stone-900"
                 >
                   <p>Opened tiles</p>
                 </TooltipContent>
