@@ -32,7 +32,9 @@ type MinesweeperGameProps = {
 }
 
 export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
-  const [seed] = useState(() => Math.floor(Math.random() * 1000000))
+  const [seed] = useState(
+    () => initialSave?.seed ?? Math.floor(Math.random() * 1000000),
+  )
   const [zoom, setZoom] = useState(() => initialSave?.zoomLevel ?? 1)
   const [offset, setOffset] = useState(() => ({
     x: initialSave?.viewportOffsetX ?? 0,

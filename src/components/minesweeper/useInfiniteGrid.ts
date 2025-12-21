@@ -69,6 +69,7 @@ export type SerializableGameState = {
   completedSectors: string | null
   isFirstClick: boolean
   gameOver: boolean
+  seed: number
 }
 
 // Helper to serialize Map to JSON string
@@ -115,6 +116,7 @@ export type InitialSaveData = {
   viewportOffsetX?: number | null
   viewportOffsetY?: number | null
   zoomLevel?: number | null
+  seed?: number | null
 } | null
 
 export function useInfiniteGrid(
@@ -629,6 +631,7 @@ export function useInfiniteGrid(
       updateCompletedSectors,
       lives,
       lastDamageTime,
+      removedMines,
     ],
   )
 
@@ -678,8 +681,9 @@ export function useInfiniteGrid(
         completedSectors.size > 0 ? serializeSet(completedSectors) : null,
       isFirstClick: isFirstClickRef.current,
       gameOver: gameState === 'waiting',
+      seed,
     }
-  }, [cellStates, completedSectors, gameState, removedMines])
+  }, [cellStates, completedSectors, gameState, removedMines, seed])
 
   // Mark as saved
   const markAsSaved = useCallback(() => {
