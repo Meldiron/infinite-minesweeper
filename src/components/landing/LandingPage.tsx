@@ -39,7 +39,7 @@ export function LandingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-stone-600 text-stone-300 hover:bg-stone-800 px-8 py-6 text-lg"
+                  className="bg-white hover:bg-stone-100 text-stone-900 border-white px-8 py-6 text-lg"
                 >
                   Sign In
                 </Button>
