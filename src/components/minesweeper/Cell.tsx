@@ -63,6 +63,7 @@ export const Cell = memo(function Cell({
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPressRef = useRef(false)
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
+  const hasMovedRef = useRef(false)
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -106,6 +107,7 @@ export const Cell = memo(function Cell({
       const touch = e.touches[0]
       touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
       isLongPressRef.current = false
+      hasMovedRef.current = false
 
       longPressTimerRef.current = setTimeout(() => {
         isLongPressRef.current = true
@@ -150,6 +152,7 @@ export const Cell = memo(function Cell({
 
     // Cancel long press if finger moved too much (user is panning)
     if (dx > 10 || dy > 10) {
+      hasMovedRef.current = true
       if (longPressTimerRef.current) {
         clearTimeout(longPressTimerRef.current)
         longPressTimerRef.current = null
@@ -170,6 +173,14 @@ export const Cell = memo(function Cell({
     if (isLongPressRef.current) {
       isLongPressRef.current = false
       touchStartPosRef.current = null
+      hasMovedRef.current = false
+      return
+    }
+
+    // If user was panning, don't trigger tap action
+    if (hasMovedRef.current) {
+      touchStartPosRef.current = null
+      hasMovedRef.current = false
       return
     }
 
@@ -187,6 +198,7 @@ export const Cell = memo(function Cell({
     }
 
     touchStartPosRef.current = null
+    hasMovedRef.current = false
   }, [
     isMobile,
     gameOver,
@@ -206,6 +218,7 @@ export const Cell = memo(function Cell({
     }
     isLongPressRef.current = false
     touchStartPosRef.current = null
+    hasMovedRef.current = false
   }, [])
 
   const fontSize = Math.max(10, size * 0.5)
