@@ -1,8 +1,48 @@
+import { useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
+import { useServerFn } from '@tanstack/react-start'
 import { Button } from '@/components/ui/button'
-import { Grid3X3, Infinity, Heart, Save, Zap, Trophy } from 'lucide-react'
+import {
+  Grid3X3,
+  Infinity,
+  Heart,
+  Save,
+  Zap,
+  Trophy,
+  Medal,
+  Award,
+} from 'lucide-react'
+import { getLeaderboardFn } from '@/server/functions/leaderboard'
+
+type LeaderboardEntry = {
+  id: string
+  nickname: string
+  tilesOpened: number
+}
 
 export function LandingPage() {
+  const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const getLeaderboard = useServerFn(getLeaderboardFn)
+
+  useEffect(() => {
+    const loadTopPlayers = async () => {
+      try {
+        const result = await getLeaderboard({
+          data: { cursor: null, limit: 3 },
+        })
+        setTopPlayers(result.entries)
+      } catch (error) {
+        console.error('Failed to load top players:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadTopPlayers()
+  }, [getLeaderboard])
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-stone-900 via-stone-800 to-stone-900">
       {/* Hero Section */}
@@ -44,16 +84,6 @@ export function LandingPage() {
                   Sign In
                 </Button>
               </Link>
-              <Link to="/leaderboard">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="bg-transparent hover:bg-stone-700 text-stone-100 border-stone-600 px-8 py-6 text-lg"
-                >
-                  <Trophy size={20} className="mr-2" />
-                  Leaderboard
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -89,8 +119,85 @@ export function LandingPage() {
         </div>
       </div>
 
-      {/* How It Works Section */}
+      {/* Leaderboard Section */}
       <div className="bg-stone-800/50 py-20">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="text-center mb-10">
+            <Trophy size={40} className="text-amber-500 mx-auto mb-4" />
+            <h2 className="text-3xl font-bold text-stone-100 mb-4">
+              Top Players
+            </h2>
+            <p className="text-stone-400">
+              See who's leading the exploration of the infinite grid.
+            </p>
+          </div>
+
+          <div className="bg-stone-900/50 rounded-xl border border-stone-700/50 overflow-hidden">
+            {isLoading ? (
+              <div className="p-8 text-center text-stone-400">
+                Loading top players...
+              </div>
+            ) : topPlayers.length === 0 ? (
+              <div className="p-8 text-center text-stone-400">
+                No players yet. Be the first!
+              </div>
+            ) : (
+              <div className="divide-y divide-stone-700/50">
+                {topPlayers.map((player, index) => (
+                  <div
+                    key={player.id}
+                    className="flex items-center justify-between p-5 hover:bg-stone-800/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 flex items-center justify-center">
+                        {index === 0 && (
+                          <Trophy size={28} className="text-yellow-500" />
+                        )}
+                        {index === 1 && (
+                          <Medal size={28} className="text-gray-400" />
+                        )}
+                        {index === 2 && (
+                          <Award size={28} className="text-amber-700" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-stone-100 text-lg">
+                          {player.nickname}
+                        </p>
+                        <p className="text-stone-500 text-sm">
+                          Rank #{index + 1}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-amber-500">
+                        {player.tilesOpened.toLocaleString()}
+                      </p>
+                      <p className="text-stone-500 text-sm">tiles opened</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="text-center mt-8">
+            <Link to="/leaderboard">
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-transparent hover:bg-stone-700 text-stone-100 border-stone-600 px-8"
+              >
+                <Trophy size={18} className="mr-2" />
+                View All Players
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* How It Works Section */}
+      <div className="py-20">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-3xl font-bold text-stone-100 text-center mb-12">
             How It Works

@@ -11,16 +11,18 @@ export const getLeaderboardFn = createServerFn({ method: 'GET' })
     z
       .object({
         cursor: z.string().nullable().optional(),
+        limit: z.number().min(1).max(100).optional(),
       })
       .optional(),
   )
   .handler(async ({ data }) => {
     const cursor = data?.cursor
+    const pageSize = data?.limit ?? LEADERBOARD_PAGE_SIZE
 
     try {
       const queries = [
         Query.orderDesc('tilesOpened'),
-        Query.limit(LEADERBOARD_PAGE_SIZE + 1), // Fetch one extra to check if there's more
+        Query.limit(pageSize + 1), // Fetch one extra to check if there's more
       ]
 
       // If we have a cursor, use it for pagination
@@ -31,10 +33,8 @@ export const getLeaderboardFn = createServerFn({ method: 'GET' })
       const result = await db.userStats.list(queries)
 
       // Check if there are more results
-      const hasMore = result.rows.length > LEADERBOARD_PAGE_SIZE
-      const rows = hasMore
-        ? result.rows.slice(0, LEADERBOARD_PAGE_SIZE)
-        : result.rows
+      const hasMore = result.rows.length > pageSize
+      const rows = hasMore ? result.rows.slice(0, pageSize) : result.rows
 
       // Get the last item's ID for the next cursor
       const nextCursor = hasMore ? rows[rows.length - 1].$id : null
