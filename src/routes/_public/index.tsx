@@ -1,4 +1,4 @@
-import { ImaginePlaceholder } from '@/components/imagine-placeholder'
+import { MinesweeperGame } from '@/components/minesweeper'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_public/')({
@@ -6,9 +6,5 @@ export const Route = createFileRoute('/_public/')({
 })
 
 function Index() {
-  return (
-    <div className="min-h-screen flex flex-col p-8">
-      <ImaginePlaceholder />
-    </div>
-  )
+  return <MinesweeperGame />
 }
