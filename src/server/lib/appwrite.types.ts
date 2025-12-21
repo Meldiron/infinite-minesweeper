@@ -23,3 +23,9 @@ export type UserPreferences = Models.Row & {
   viewportOffsetY: number | null
   zoomLevel: number | null
 }
+
+export type UserOnboarding = Models.Row & {
+  createdBy: string
+  nickname: string
+  onboardingCompleted: boolean
+}
