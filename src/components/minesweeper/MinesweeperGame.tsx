@@ -328,6 +328,9 @@ export function MinesweeperGame() {
 
   const isWaiting = gameState === 'waiting'
 
+  // Thinner borders at very low zoom levels
+  const sectorBorderClass = zoom <= 0.1 ? 'border' : 'border-2'
+
   return (
     <div
       className={`relative w-full h-screen ${bgColor} overflow-hidden select-none transition-colors duration-300`}
@@ -441,7 +444,7 @@ export function MinesweeperGame() {
               return (
                 <div
                   key={`sector-${sectorX},${sectorY}`}
-                  className={`absolute ${colors} border-2 transition-colors duration-200`}
+                  className={`absolute ${colors} ${sectorBorderClass} transition-colors duration-200`}
                   style={{
                     left: sectorX * sectorPixelSize,
                     top: sectorY * sectorPixelSize,
