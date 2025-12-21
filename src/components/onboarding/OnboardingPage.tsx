@@ -133,7 +133,7 @@ export function OnboardingPage() {
   const inputStatus = getInputStatus()
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-stone-900 p-6">
+    <div className="min-h-screen w-full flex items-center justify-center bg-stone-900 p-6 overflow-hidden">
       <Card className="w-full max-w-md bg-stone-800 border-stone-700">
         <CardHeader className="text-center">
           <CardTitle className="text-lg md:text-2xl text-stone-100">
