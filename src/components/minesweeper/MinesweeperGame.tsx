@@ -10,6 +10,7 @@ import {
 import { Heart, MapPin } from 'lucide-react'
 import { useServerFn } from '@tanstack/react-start'
 import { saveGameFn, deleteGameSaveFn } from '@/server/functions/minesweeper'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const BASE_CELL_SIZE = 32
 const MIN_ZOOM = 0.05
@@ -56,6 +57,7 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
   const [saveError, setSaveError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const isMobile = useIsMobile()
 
   const saveGame = useServerFn(saveGameFn)
   const deleteGameSave = useServerFn(deleteGameSaveFn)
@@ -198,6 +200,27 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
       setCurrentSector(sectorUnderCursor)
     }
   }, [sectorUnderCursor])
+
+  // Calculate sector at center of screen (for mobile)
+  const centerSector = useMemo(() => {
+    if (containerSize.width === 0 || containerSize.height === 0) {
+      return { x: 0, y: 0 }
+    }
+
+    // Center of the screen in screen coordinates
+    const centerX = containerSize.width / 2
+    const centerY = containerSize.height / 2
+
+    // Convert to world position
+    const worldX = (centerX - offset.x) / cellSize
+    const worldY = (centerY - offset.y) / cellSize
+
+    // Calculate sector coordinates
+    const sectorX = Math.floor(worldX / SECTOR_SIZE)
+    const sectorY = Math.floor(worldY / SECTOR_SIZE)
+
+    return { x: sectorX, y: sectorY }
+  }, [containerSize, offset, cellSize])
 
   // Export board as PNG (1 pixel per sector, max 1000x1000, centered at 0,0)
   // Uses chunked processing to prevent browser freezing
@@ -588,7 +611,8 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
         <div className="flex items-center gap-2">
           <MapPin size={16} className="text-amber-500" />
           <span className="font-mono">
-            {currentSector.x}, {currentSector.y}
+            {isMobile ? centerSector.x : currentSector.x},{' '}
+            {isMobile ? centerSector.y : currentSector.y}
           </span>
         </div>
       </div>
