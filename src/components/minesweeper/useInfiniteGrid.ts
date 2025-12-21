@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 // Deterministic hash function for consistent mine placement
 function hashCoord(x: number, y: number, seed: number = 12345): number {
@@ -10,11 +10,11 @@ function hashCoord(x: number, y: number, seed: number = 12345): number {
 }
 
 // Check if a cell has a mine (deterministic based on coordinates)
-export function hasMine(
+export function hasMineBase(
   x: number,
   y: number,
   seed: number = 12345,
-  density: number = 0.15,
+  density: number = 0.12,
 ): boolean {
   return hashCoord(x, y, seed) < density
 }
@@ -33,17 +33,6 @@ export function getNeighbors(x: number, y: number): [number, number][] {
   ]
 }
 
-// Count adjacent mines
-export function countAdjacentMines(
-  x: number,
-  y: number,
-  seed: number = 12345,
-  density: number = 0.15,
-): number {
-  return getNeighbors(x, y).filter(([nx, ny]) => hasMine(nx, ny, seed, density))
-    .length
-}
-
 export type CellState = {
   revealed: boolean
   flagged: boolean
@@ -52,7 +41,7 @@ export type CellState = {
 
 export type GameState = 'playing' | 'won' | 'lost'
 
-export function useInfiniteGrid(seed: number = 12345, density: number = 0.15) {
+export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
   const [cellStates, setCellStates] = useState<Map<string, CellState>>(
     new Map(),
   )
@@ -60,7 +49,29 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.15) {
   const [revealedCount, setRevealedCount] = useState(0)
   const [flaggedCount, setFlaggedCount] = useState(0)
 
+  // Track removed mines (for first click protection)
+  const removedMinesRef = useRef<Set<string>>(new Set())
+  const isFirstClickRef = useRef<boolean>(true)
+
   const getKey = useCallback((x: number, y: number) => `${x},${y}`, [])
+
+  // Check if cell has mine, considering removed mines
+  const hasMine = useCallback(
+    (x: number, y: number): boolean => {
+      const key = getKey(x, y)
+      if (removedMinesRef.current.has(key)) return false
+      return hasMineBase(x, y, seed, density)
+    },
+    [getKey, seed, density],
+  )
+
+  // Count adjacent mines considering removed mines
+  const countAdjacentMines = useCallback(
+    (x: number, y: number): number => {
+      return getNeighbors(x, y).filter(([nx, ny]) => hasMine(nx, ny)).length
+    },
+    [hasMine],
+  )
 
   const getCellState = useCallback(
     (x: number, y: number): CellState => {
@@ -79,6 +90,24 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.15) {
 
       if (current?.revealed || current?.flagged) return
 
+      // Handle first click - ensure it's never a mine
+      if (isFirstClickRef.current) {
+        isFirstClickRef.current = false
+
+        // If first click is on a mine, remove it
+        if (hasMineBase(x, y, seed, density)) {
+          removedMinesRef.current.add(key)
+        }
+
+        // Also remove mines from immediate neighbors to create an opening
+        for (const [nx, ny] of getNeighbors(x, y)) {
+          const neighborKey = getKey(nx, ny)
+          if (hasMineBase(nx, ny, seed, density)) {
+            removedMinesRef.current.add(neighborKey)
+          }
+        }
+      }
+
       const newStates = new Map(cellStates)
       const toReveal: [number, number][] = [[x, y]]
       let revealed = 0
@@ -90,7 +119,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.15) {
 
         if (cellState?.revealed || cellState?.flagged) continue
 
-        const isMine = hasMine(cx, cy, seed, density)
+        const isMine = hasMine(cx, cy)
 
         if (isMine) {
           newStates.set(cellKey, {
@@ -106,9 +135,9 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.15) {
         newStates.set(cellKey, { revealed: true, flagged: false })
         revealed++
 
-        const adjacentMines = countAdjacentMines(cx, cy, seed, density)
+        const adjacentMines = countAdjacentMines(cx, cy)
 
-        // If no adjacent mines, reveal neighbors
+        // If no adjacent mines, reveal neighbors (auto-expand empty areas)
         if (adjacentMines === 0) {
           for (const [nx, ny] of getNeighbors(cx, cy)) {
             const neighborKey = getKey(nx, ny)
@@ -123,7 +152,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.15) {
       setCellStates(newStates)
       setRevealedCount((prev) => prev + revealed)
     },
-    [cellStates, gameState, getKey, seed, density],
+    [cellStates, gameState, getKey, seed, density, hasMine, countAdjacentMines],
   )
 
   const toggleFlag = useCallback(
@@ -149,6 +178,8 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.15) {
     setGameState('playing')
     setRevealedCount(0)
     setFlaggedCount(0)
+    removedMinesRef.current = new Set()
+    isFirstClickRef.current = true
   }, [])
 
   return {
@@ -159,8 +190,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.15) {
     gameState,
     revealedCount,
     flaggedCount,
-    hasMine: (x: number, y: number) => hasMine(x, y, seed, density),
-    countAdjacentMines: (x: number, y: number) =>
-      countAdjacentMines(x, y, seed, density),
+    hasMine,
+    countAdjacentMines,
   }
 }
