@@ -14,8 +14,6 @@ const MAX_ZOOM = 2
 const ZOOM_STEP = 0.1
 const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
 
-export type Theme = 'light' | 'dark'
-
 function formatTime(ms: number): string {
   const totalSeconds = Math.ceil(ms / 1000)
   const minutes = Math.floor(totalSeconds / 60)
@@ -30,7 +28,6 @@ export function MinesweeperGame() {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
-  const [theme, setTheme] = useState<Theme>('dark')
   const containerRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -286,10 +283,6 @@ export function MinesweeperGame() {
     touchStartRef.current = null
   }, [])
 
-  const handleToggleTheme = useCallback(() => {
-    setTheme((t) => (t === 'light' ? 'dark' : 'light'))
-  }, [])
-
   // Reset game with new seed
   const handleReset = useCallback(() => {
     resetGame()
@@ -299,30 +292,15 @@ export function MinesweeperGame() {
     window.location.reload()
   }, [resetGame])
 
-  const bgColor = theme === 'dark' ? 'bg-stone-800' : 'bg-stone-300'
-  const sectorLineColor =
-    theme === 'dark' ? 'bg-amber-500/60' : 'bg-amber-600/70'
-
-  // Sector colors based on state and theme
+  // Sector colors based on state (dark theme only)
   const getSectorColors = (state: SectorState): string => {
-    if (theme === 'dark') {
-      switch (state) {
-        case 'untouched':
-          return 'bg-stone-700 border-stone-600'
-        case 'in-progress':
-          return 'bg-amber-700 border-amber-600'
-        case 'finished':
-          return 'bg-green-700 border-green-600'
-      }
-    } else {
-      switch (state) {
-        case 'untouched':
-          return 'bg-stone-400 border-stone-500'
-        case 'in-progress':
-          return 'bg-amber-400 border-amber-500'
-        case 'finished':
-          return 'bg-green-400 border-green-500'
-      }
+    switch (state) {
+      case 'untouched':
+        return 'bg-stone-700 border-stone-600'
+      case 'in-progress':
+        return 'bg-amber-700 border-amber-600'
+      case 'finished':
+        return 'bg-green-700 border-green-600'
     }
   }
 
@@ -332,9 +310,7 @@ export function MinesweeperGame() {
   const sectorBorderClass = zoom <= 0.1 ? 'border' : 'border-2'
 
   return (
-    <div
-      className={`relative w-full h-screen ${bgColor} overflow-hidden select-none transition-colors duration-300`}
-    >
+    <div className="relative w-full h-screen bg-stone-800 overflow-hidden select-none">
       <GameControls
         zoom={zoom}
         onZoomIn={handleZoomIn}
@@ -344,14 +320,12 @@ export function MinesweeperGame() {
         gameState={gameState}
         revealedCount={revealedCount}
         flaggedCount={flaggedCount}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
         lives={lives}
         maxLives={maxLives}
         timeUntilNextLife={timeUntilNextLife}
       />
 
-      <GameInstructions theme={theme} />
+      <GameInstructions />
 
       {/* Waiting overlay when out of lives */}
       {isWaiting && (
@@ -429,7 +403,6 @@ export function MinesweeperGame() {
                   onReveal={revealCell}
                   onFlag={toggleFlag}
                   gameOver={false}
-                  theme={theme}
                   sectorComplete={sectorComplete}
                 />
               )
@@ -460,7 +433,7 @@ export function MinesweeperGame() {
             sectorLines.vertical.map((x) => (
               <div
                 key={`v-${x}`}
-                className={`absolute ${sectorLineColor} pointer-events-none`}
+                className="absolute bg-amber-500/60 pointer-events-none"
                 style={{
                   left: x,
                   top: -10000,
@@ -475,7 +448,7 @@ export function MinesweeperGame() {
             sectorLines.horizontal.map((y) => (
               <div
                 key={`h-${y}`}
-                className={`absolute ${sectorLineColor} pointer-events-none`}
+                className="absolute bg-amber-500/60 pointer-events-none"
                 style={{
                   left: -10000,
                   top: y,

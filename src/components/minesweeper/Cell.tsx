@@ -1,20 +1,8 @@
 import { memo } from 'react'
 import { Flag, Bomb } from 'lucide-react'
 import type { CellState } from './useInfiniteGrid'
-import type { Theme } from './MinesweeperGame'
 
 const NUMBER_COLORS: Record<number, string> = {
-  1: 'text-blue-500',
-  2: 'text-green-500',
-  3: 'text-red-500',
-  4: 'text-purple-600',
-  5: 'text-amber-700',
-  6: 'text-cyan-500',
-  7: 'text-stone-800',
-  8: 'text-stone-600',
-}
-
-const NUMBER_COLORS_DARK: Record<number, string> = {
   1: 'text-blue-400',
   2: 'text-green-400',
   3: 'text-red-400',
@@ -47,7 +35,6 @@ type CellProps = {
   onReveal: (x: number, y: number) => void
   onFlag: (x: number, y: number) => void
   gameOver: boolean
-  theme: Theme
   sectorComplete: boolean
 }
 
@@ -61,7 +48,6 @@ export const Cell = memo(function Cell({
   onReveal,
   onFlag,
   gameOver,
-  theme,
   sectorComplete,
 }: CellProps) {
   const handleClick = (e: React.MouseEvent) => {
@@ -81,39 +67,23 @@ export const Cell = memo(function Cell({
   const fontSize = Math.max(10, size * 0.5)
   const iconSize = Math.max(10, size * 0.45)
 
-  const isDark = theme === 'dark'
-
   // Use different number colors for completed sectors
-  const numberColors = sectorComplete
-    ? NUMBER_COLORS_COMPLETE
-    : isDark
-      ? NUMBER_COLORS_DARK
-      : NUMBER_COLORS
+  const numberColors = sectorComplete ? NUMBER_COLORS_COMPLETE : NUMBER_COLORS
 
-  // Theme-based styles with sector completion override
+  // Dark theme styles with sector completion override
   const revealedBg = sectorComplete
     ? 'bg-green-400 border-green-500'
-    : isDark
-      ? 'bg-stone-800 border-stone-700'
-      : 'bg-stone-400 border-stone-500'
+    : 'bg-stone-800 border-stone-700'
 
   const mineBg = sectorComplete
     ? 'bg-green-500 border-green-600'
-    : isDark
-      ? 'bg-stone-700 border-stone-600'
-      : 'bg-stone-500 border-stone-600'
+    : 'bg-stone-700 border-stone-600'
 
   const unrevealedBg = sectorComplete
     ? 'bg-gradient-to-br from-green-400 to-green-500 border-t-2 border-l-2 border-green-300 border-r-2 border-b-2 border-r-green-600 border-b-green-600'
-    : isDark
-      ? 'bg-gradient-to-br from-stone-700 to-stone-800 border-t-2 border-l-2 border-stone-600 border-r-2 border-b-2 border-r-stone-900 border-b-stone-900 hover:from-stone-650 hover:to-stone-750'
-      : 'bg-gradient-to-br from-stone-500 to-stone-600 border-t-2 border-l-2 border-stone-400 border-r-2 border-b-2 border-r-stone-700 border-b-stone-700 hover:from-stone-450 hover:to-stone-550'
+    : 'bg-gradient-to-br from-stone-700 to-stone-800 border-t-2 border-l-2 border-stone-600 border-r-2 border-b-2 border-r-stone-900 border-b-stone-900 hover:from-stone-650 hover:to-stone-750'
 
-  const bombIconColor = sectorComplete
-    ? 'text-green-800'
-    : isDark
-      ? 'text-stone-400'
-      : 'text-stone-900'
+  const bombIconColor = sectorComplete ? 'text-green-800' : 'text-stone-400'
 
   // Revealed cell
   if (state.revealed) {
@@ -161,7 +131,7 @@ export const Cell = memo(function Cell({
       >
         {adjacentMines > 0 && (
           <span
-            className={`font-bold font-mono ${numberColors[adjacentMines] || (sectorComplete ? 'text-green-900' : isDark ? 'text-stone-300' : 'text-stone-800')}`}
+            className={`font-bold font-mono ${numberColors[adjacentMines] || (sectorComplete ? 'text-green-900' : 'text-stone-300')}`}
             style={{ fontSize }}
           >
             {adjacentMines}
