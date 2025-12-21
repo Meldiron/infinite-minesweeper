@@ -13,6 +13,7 @@ import { Route as PublicRouteImport } from './routes/_public'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as ProtectedPlayRouteImport } from './routes/_protected/play'
 import { Route as ProtectedExampleProtectedRouteRouteImport } from './routes/_protected/example-protected-route'
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignOutRouteImport } from './routes/_auth/sign-out'
@@ -35,6 +36,11 @@ const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PublicRoute,
+} as any)
+const ProtectedPlayRoute = ProtectedPlayRouteImport.update({
+  id: '/play',
+  path: '/play',
+  getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedExampleProtectedRouteRoute =
   ProtectedExampleProtectedRouteRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/sign-out': typeof AuthSignOutRoute
   '/sign-up': typeof AuthSignUpRoute
   '/example-protected-route': typeof ProtectedExampleProtectedRouteRoute
+  '/play': typeof ProtectedPlayRoute
   '/': typeof PublicIndexRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/sign-out': typeof AuthSignOutRoute
   '/sign-up': typeof AuthSignUpRoute
   '/example-protected-route': typeof ProtectedExampleProtectedRouteRoute
+  '/play': typeof ProtectedPlayRoute
   '/': typeof PublicIndexRoute
 }
 export interface FileRoutesById {
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/_auth/sign-out': typeof AuthSignOutRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
   '/_protected/example-protected-route': typeof ProtectedExampleProtectedRouteRoute
+  '/_protected/play': typeof ProtectedPlayRoute
   '/_public/': typeof PublicIndexRoute
 }
 export interface FileRouteTypes {
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/sign-out'
     | '/sign-up'
     | '/example-protected-route'
+    | '/play'
     | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/sign-out'
     | '/sign-up'
     | '/example-protected-route'
+    | '/play'
     | '/'
   id:
     | '__root__'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/_auth/sign-out'
     | '/_auth/sign-up'
     | '/_protected/example-protected-route'
+    | '/_protected/play'
     | '/_public/'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +169,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
       parentRoute: typeof PublicRoute
+    }
+    '/_protected/play': {
+      id: '/_protected/play'
+      path: '/play'
+      fullPath: '/play'
+      preLoaderRoute: typeof ProtectedPlayRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_protected/example-protected-route': {
       id: '/_protected/example-protected-route'
@@ -212,10 +231,12 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface ProtectedRouteChildren {
   ProtectedExampleProtectedRouteRoute: typeof ProtectedExampleProtectedRouteRoute
+  ProtectedPlayRoute: typeof ProtectedPlayRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedExampleProtectedRouteRoute: ProtectedExampleProtectedRouteRoute,
+  ProtectedPlayRoute: ProtectedPlayRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

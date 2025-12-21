@@ -1,12 +1,15 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Cell } from './Cell'
-import { GameControls, GameInstructions } from './GameControls'
+import { GameControls, GameInstructions, SaveIndicator } from './GameControls'
 import {
   useInfiniteGrid,
   SECTOR_SIZE,
   type SectorState,
+  type InitialSaveData,
 } from './useInfiniteGrid'
 import { Heart, MapPin } from 'lucide-react'
+import { useServerFn } from '@tanstack/react-start'
+import { saveGameFn, deleteGameSaveFn } from '@/server/functions/minesweeper'
 
 const BASE_CELL_SIZE = 32
 const MIN_ZOOM = 0.05
@@ -15,6 +18,7 @@ const ZOOM_STEP = 0.1
 const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
 const EXPORT_MAX_SIZE = 1000 // Maximum export size in pixels (1000x1000)
 const EXPORT_CHUNK_SIZE = 50 // Process 50 rows at a time to prevent freezing
+const AUTO_SAVE_DELAY = 3000 // 3 seconds of inactivity before auto-save
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.ceil(ms / 1000)
@@ -23,10 +27,17 @@ function formatTime(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
-export function MinesweeperGame() {
+type MinesweeperGameProps = {
+  initialSave?: InitialSaveData
+}
+
+export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
   const [seed] = useState(() => Math.floor(Math.random() * 1000000))
-  const [zoom, setZoom] = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(() => initialSave?.zoomLevel ?? 1)
+  const [offset, setOffset] = useState(() => ({
+    x: initialSave?.viewportOffsetX ?? 0,
+    y: initialSave?.viewportOffsetY ?? 0,
+  }))
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -35,7 +46,13 @@ export function MinesweeperGame() {
   )
   const [exportProgress, setExportProgress] = useState<number | null>(null)
   const [instructionsCollapsed, setInstructionsCollapsed] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const saveGame = useServerFn(saveGameFn)
+  const deleteGameSave = useServerFn(deleteGameSaveFn)
 
   const {
     getCellState,
@@ -51,7 +68,58 @@ export function MinesweeperGame() {
     lives,
     maxLives,
     timeUntilNextLife,
-  } = useInfiniteGrid(seed, 0.15)
+    isDirty,
+    lastSaveTime,
+    getSerializableState,
+    markAsSaved,
+  } = useInfiniteGrid(seed, 0.15, initialSave)
+
+  // Perform save operation
+  const performSave = useCallback(async () => {
+    if (isSaving) return
+
+    setIsSaving(true)
+    setSaveError(null)
+
+    try {
+      const state = getSerializableState()
+      await saveGame({
+        data: {
+          ...state,
+          viewportOffsetX: offset.x,
+          viewportOffsetY: offset.y,
+          zoomLevel: zoom,
+        },
+      })
+      markAsSaved()
+    } catch (error) {
+      console.error('Failed to save game:', error)
+      setSaveError('Failed to save')
+    } finally {
+      setIsSaving(false)
+    }
+  }, [getSerializableState, saveGame, markAsSaved, offset, zoom, isSaving])
+
+  // Auto-save effect - triggers 3 seconds after last change
+  useEffect(() => {
+    if (!isDirty) return
+
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+    }
+
+    // Set new timer
+    autoSaveTimerRef.current = setTimeout(() => {
+      performSave()
+    }, AUTO_SAVE_DELAY)
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+      }
+    }
+  }, [isDirty, performSave])
 
   // Track container size
   useEffect(() => {
@@ -408,13 +476,20 @@ export function MinesweeperGame() {
   }, [])
 
   // Reset game with new seed
-  const handleReset = useCallback(() => {
+  const handleReset = useCallback(async () => {
+    // Delete the save from database
+    try {
+      await deleteGameSave()
+    } catch (error) {
+      console.error('Failed to delete save:', error)
+    }
+
     resetGame()
     setOffset({ x: 0, y: 0 })
     setZoom(1)
     // Force re-render with new seed by reloading
     window.location.reload()
-  }, [resetGame])
+  }, [resetGame, deleteGameSave])
 
   // Sector colors based on state (dark theme only)
   const getSectorColors = (state: SectorState): string => {
@@ -454,6 +529,15 @@ export function MinesweeperGame() {
       <GameInstructions
         isCollapsed={instructionsCollapsed}
         onToggleCollapse={() => setInstructionsCollapsed((prev) => !prev)}
+      />
+
+      {/* Save indicator */}
+      <SaveIndicator
+        isDirty={isDirty}
+        isSaving={isSaving}
+        lastSaveTime={lastSaveTime}
+        error={saveError}
+        onForceSave={performSave}
       />
 
       {/* Sector position indicator */}

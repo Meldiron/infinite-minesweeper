@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_auth')({
     const currentUser = await getCurrentUser()
 
     if (currentUser && location.pathname !== '/sign-out') {
-      throw redirect({ to: '/' })
+      throw redirect({ to: '/play' })
     }
 
     return {

@@ -9,6 +9,10 @@ import {
   Loader2,
   ChevronDown,
   HelpCircle,
+  Cloud,
+  CloudOff,
+  Check,
+  AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -252,6 +256,86 @@ export function GameInstructions({
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+type SaveIndicatorProps = {
+  isDirty: boolean
+  isSaving: boolean
+  lastSaveTime: number | null
+  error: string | null
+  onForceSave: () => void
+}
+
+export function SaveIndicator({
+  isDirty,
+  isSaving,
+  lastSaveTime,
+  error,
+  onForceSave,
+}: SaveIndicatorProps) {
+  const getStatusInfo = () => {
+    if (error) {
+      return {
+        icon: <AlertCircle size={14} className="text-red-400" />,
+        text: 'Save failed',
+        color: 'text-red-400',
+      }
+    }
+    if (isSaving) {
+      return {
+        icon: <Loader2 size={14} className="text-amber-400 animate-spin" />,
+        text: 'Saving...',
+        color: 'text-amber-400',
+      }
+    }
+    if (isDirty) {
+      return {
+        icon: <CloudOff size={14} className="text-stone-400" />,
+        text: 'Unsaved',
+        color: 'text-stone-400',
+      }
+    }
+    if (lastSaveTime) {
+      return {
+        icon: <Check size={14} className="text-green-400" />,
+        text: 'Saved',
+        color: 'text-green-400',
+      }
+    }
+    return {
+      icon: <Cloud size={14} className="text-stone-500" />,
+      text: 'Ready',
+      color: 'text-stone-500',
+    }
+  }
+
+  const status = getStatusInfo()
+
+  return (
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+      <button
+        onClick={onForceSave}
+        disabled={isSaving || (!isDirty && !error)}
+        className={`
+                    flex items-center gap-2 px-3 py-1.5 rounded-full
+                    bg-stone-900/95 backdrop-blur-sm shadow-lg
+                    transition-all duration-200
+                    ${isDirty || error ? 'cursor-pointer hover:bg-stone-800' : 'cursor-default'}
+                    ${status.color}
+                `}
+        title={
+          isDirty
+            ? 'Click to save now'
+            : error
+              ? 'Click to retry'
+              : 'Game saved'
+        }
+      >
+        {status.icon}
+        <span className="text-xs font-medium">{status.text}</span>
+      </button>
     </div>
   )
 }

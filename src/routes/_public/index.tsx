@@ -1,10 +1,21 @@
-import { MinesweeperGame } from '@/components/minesweeper'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { LandingPage } from '@/components/landing/LandingPage'
+import { authMiddleware } from '@/server/functions/auth'
 
 export const Route = createFileRoute('/_public/')({
-  component: Index,
+  component: HomePage,
+  loader: async () => {
+    const { currentUser } = await authMiddleware()
+
+    // Redirect authenticated users to the game
+    if (currentUser) {
+      throw redirect({ to: '/play' })
+    }
+
+    return { currentUser: null }
+  },
 })
 
-function Index() {
-  return <MinesweeperGame />
+function HomePage() {
+  return <LandingPage />
 }

@@ -62,13 +62,103 @@ export type CellState = {
 
 export type GameState = 'playing' | 'waiting'
 
-export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
-  const [cellStates, setCellStates] = useState<Map<string, CellState>>(
-    new Map(),
-  )
-  const [gameState, setGameState] = useState<GameState>('playing')
-  const [revealedCount, setRevealedCount] = useState(0)
-  const [flaggedCount, setFlaggedCount] = useState(0)
+// Serializable game state for persistence
+export type SerializableGameState = {
+  cellStates: string
+  removedMines: string | null
+  completedSectors: string | null
+  isFirstClick: boolean
+  gameOver: boolean
+}
+
+// Helper to serialize Map to JSON string
+function serializeCellStates(states: Map<string, CellState>): string {
+  const obj: Record<string, CellState> = {}
+  states.forEach((value, key) => {
+    obj[key] = value
+  })
+  return JSON.stringify(obj)
+}
+
+// Helper to deserialize JSON string to Map
+function deserializeCellStates(json: string): Map<string, CellState> {
+  try {
+    const obj = JSON.parse(json) as Record<string, CellState>
+    return new Map(Object.entries(obj))
+  } catch {
+    return new Map()
+  }
+}
+
+// Helper to serialize Set to JSON string
+function serializeSet(set: Set<string>): string {
+  return JSON.stringify(Array.from(set))
+}
+
+// Helper to deserialize JSON string to Set
+function deserializeSet(json: string | null): Set<string> {
+  if (!json) return new Set()
+  try {
+    const arr = JSON.parse(json) as string[]
+    return new Set(arr)
+  } catch {
+    return new Set()
+  }
+}
+
+export type InitialSaveData = {
+  cellStates: string
+  removedMines: string | null
+  completedSectors: string | null
+  isFirstClick: boolean
+  gameOver: boolean
+  viewportOffsetX?: number | null
+  viewportOffsetY?: number | null
+  zoomLevel?: number | null
+} | null
+
+export function useInfiniteGrid(
+  seed: number = 12345,
+  density: number = 0.12,
+  initialSave?: InitialSaveData,
+) {
+  // Initialize state from save data if available
+  const [cellStates, setCellStates] = useState<Map<string, CellState>>(() => {
+    if (initialSave?.cellStates) {
+      return deserializeCellStates(initialSave.cellStates)
+    }
+    return new Map()
+  })
+
+  const [gameState, setGameState] = useState<GameState>(() => {
+    if (initialSave?.gameOver) return 'waiting'
+    return 'playing'
+  })
+
+  const [revealedCount, setRevealedCount] = useState(() => {
+    if (initialSave?.cellStates) {
+      const states = deserializeCellStates(initialSave.cellStates)
+      let count = 0
+      states.forEach((state) => {
+        if (state.revealed && !state.exploded) count++
+      })
+      return count
+    }
+    return 0
+  })
+
+  const [flaggedCount, setFlaggedCount] = useState(() => {
+    if (initialSave?.cellStates) {
+      const states = deserializeCellStates(initialSave.cellStates)
+      let count = 0
+      states.forEach((state) => {
+        if (state.flagged) count++
+      })
+      return count
+    }
+    return 0
+  })
+
   const [lives, setLives] = useState(MAX_LIVES)
   const [lastDamageTime, setLastDamageTime] = useState<number | null>(null)
   const [timeUntilNextLife, setTimeUntilNextLife] = useState<number | null>(
@@ -76,13 +166,24 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
   )
 
   // Cache for completed sectors
-  const [completedSectors, setCompletedSectors] = useState<Set<string>>(
-    new Set(),
-  )
+  const [completedSectors, setCompletedSectors] = useState<Set<string>>(() => {
+    if (initialSave?.completedSectors) {
+      return deserializeSet(initialSave.completedSectors)
+    }
+    return new Set()
+  })
 
   // Track removed mines (for first click protection)
-  const removedMinesRef = useRef<Set<string>>(new Set())
-  const isFirstClickRef = useRef<boolean>(true)
+  const removedMinesRef = useRef<Set<string>>(
+    initialSave?.removedMines
+      ? deserializeSet(initialSave.removedMines)
+      : new Set(),
+  )
+  const isFirstClickRef = useRef<boolean>(initialSave?.isFirstClick ?? true)
+
+  // Track if state has changed since last save
+  const [isDirty, setIsDirty] = useState(false)
+  const [lastSaveTime, setLastSaveTime] = useState<number | null>(null)
 
   // Health regeneration effect
   useEffect(() => {
@@ -380,6 +481,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
             exploded: true,
           })
           setCellStates(newStates)
+          setIsDirty(true)
 
           // Check for sector completion after mine explosion
           updateCompletedSectors(newStates, [[cx, cy]])
@@ -419,6 +521,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
 
       setCellStates(newStates)
       setRevealedCount((prev) => prev + revealed)
+      setIsDirty(true)
 
       // Check for sector completion
       if (revealedCells.length > 0) {
@@ -454,6 +557,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
       newStates.set(key, { revealed: false, flagged: !wasFlagged })
       setCellStates(newStates)
       setFlaggedCount((prev) => prev + (wasFlagged ? -1 : 1))
+      setIsDirty(true)
 
       // Check for sector completion after flagging
       updateCompletedSectors(newStates, [[x, y]])
@@ -472,6 +576,29 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
     setCompletedSectors(new Set())
     removedMinesRef.current = new Set()
     isFirstClickRef.current = true
+    setIsDirty(true)
+    setLastSaveTime(null)
+  }, [])
+
+  // Get serializable state for saving
+  const getSerializableState = useCallback((): SerializableGameState => {
+    return {
+      cellStates: serializeCellStates(cellStates),
+      removedMines:
+        removedMinesRef.current.size > 0
+          ? serializeSet(removedMinesRef.current)
+          : null,
+      completedSectors:
+        completedSectors.size > 0 ? serializeSet(completedSectors) : null,
+      isFirstClick: isFirstClickRef.current,
+      gameOver: gameState === 'waiting',
+    }
+  }, [cellStates, completedSectors, gameState])
+
+  // Mark as saved
+  const markAsSaved = useCallback(() => {
+    setIsDirty(false)
+    setLastSaveTime(Date.now())
   }, [])
 
   return {
@@ -489,5 +616,10 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
     lives,
     maxLives: MAX_LIVES,
     timeUntilNextLife,
+    // Persistence helpers
+    isDirty,
+    lastSaveTime,
+    getSerializableState,
+    markAsSaved,
   }
 }
