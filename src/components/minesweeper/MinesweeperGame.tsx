@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Cell } from './Cell'
 import { GameControls, GameInstructions } from './GameControls'
-import { useInfiniteGrid } from './useInfiniteGrid'
+import { useInfiniteGrid, SECTOR_SIZE } from './useInfiniteGrid'
 
 const BASE_CELL_SIZE = 32
 const MIN_ZOOM = 0.25
@@ -50,6 +50,7 @@ export function MinesweeperGame() {
   }, [])
 
   const cellSize = BASE_CELL_SIZE * zoom
+  const sectorPixelSize = SECTOR_SIZE * cellSize
 
   // Calculate visible cells
   const visibleCells = useMemo(() => {
@@ -71,6 +72,35 @@ export function MinesweeperGame() {
     }
     return cells
   }, [containerSize, offset, cellSize])
+
+  // Calculate visible sector grid lines
+  const sectorLines = useMemo(() => {
+    if (containerSize.width === 0 || containerSize.height === 0) {
+      return { vertical: [], horizontal: [] }
+    }
+
+    const padding = 1
+    // Calculate sector boundaries in sector coordinates
+    const startSectorX = Math.floor(-offset.x / sectorPixelSize) - padding
+    const endSectorX =
+      Math.ceil((containerSize.width - offset.x) / sectorPixelSize) + padding
+    const startSectorY = Math.floor(-offset.y / sectorPixelSize) - padding
+    const endSectorY =
+      Math.ceil((containerSize.height - offset.y) / sectorPixelSize) + padding
+
+    const vertical: number[] = []
+    const horizontal: number[] = []
+
+    for (let sx = startSectorX; sx <= endSectorX; sx++) {
+      vertical.push(sx * sectorPixelSize)
+    }
+
+    for (let sy = startSectorY; sy <= endSectorY; sy++) {
+      horizontal.push(sy * sectorPixelSize)
+    }
+
+    return { vertical, horizontal }
+  }, [containerSize, offset, sectorPixelSize])
 
   // Zoom handlers
   const handleZoomIn = useCallback(() => {
@@ -202,6 +232,8 @@ export function MinesweeperGame() {
   }, [resetGame])
 
   const bgColor = theme === 'dark' ? 'bg-stone-800' : 'bg-stone-300'
+  const sectorLineColor =
+    theme === 'dark' ? 'bg-amber-500/60' : 'bg-amber-600/70'
 
   return (
     <div
@@ -242,6 +274,7 @@ export function MinesweeperGame() {
             willChange: 'transform',
           }}
         >
+          {/* Render cells */}
           {visibleCells.map(({ x, y }) => {
             const state = getCellState(x, y)
             const isMine = hasMine(x, y)
@@ -265,6 +298,34 @@ export function MinesweeperGame() {
               />
             )
           })}
+
+          {/* Render sector grid lines - vertical */}
+          {sectorLines.vertical.map((x) => (
+            <div
+              key={`v-${x}`}
+              className={`absolute ${sectorLineColor} pointer-events-none`}
+              style={{
+                left: x,
+                top: -10000,
+                width: 2,
+                height: 20000,
+              }}
+            />
+          ))}
+
+          {/* Render sector grid lines - horizontal */}
+          {sectorLines.horizontal.map((y) => (
+            <div
+              key={`h-${y}`}
+              className={`absolute ${sectorLineColor} pointer-events-none`}
+              style={{
+                left: -10000,
+                top: y,
+                width: 20000,
+                height: 2,
+              }}
+            />
+          ))}
         </div>
       </div>
     </div>
