@@ -88,7 +88,36 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
       const key = getKey(x, y)
       const current = cellStates.get(key)
 
-      if (current?.revealed || current?.flagged) return
+      if (current?.flagged) return
+
+      // If cell is already revealed and has a number, try chord reveal
+      if (current?.revealed) {
+        const adjacentMines = countAdjacentMines(x, y)
+        if (adjacentMines === 0) return
+
+        const neighbors = getNeighbors(x, y)
+        let flaggedCount = 0
+        const unrevealedUnflagged: [number, number][] = []
+
+        for (const [nx, ny] of neighbors) {
+          const neighborState = getCellState(nx, ny)
+          if (neighborState.flagged) {
+            flaggedCount++
+          } else if (!neighborState.revealed) {
+            unrevealedUnflagged.push([nx, ny])
+          }
+        }
+
+        // If flagged count matches the number, reveal all unflagged neighbors
+        if (flaggedCount === adjacentMines && unrevealedUnflagged.length > 0) {
+          for (const [nx, ny] of unrevealedUnflagged) {
+            // Recursively call revealCell for each unflagged neighbor
+            // We need to do this one at a time to handle game over properly
+            setTimeout(() => revealCell(nx, ny), 0)
+          }
+        }
+        return
+      }
 
       // Handle first click - ensure it's never a mine
       if (isFirstClickRef.current) {
