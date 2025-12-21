@@ -10,10 +10,10 @@ import {
   Check,
   CloudOff,
   AlertCircle,
-  MousePointer,
   Flag,
   Grid3X3,
   Move,
+  Unlock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -367,7 +367,7 @@ export function MobileInteractionToggle({
 }) {
   return (
     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-auto md:hidden">
-      <div className="bg-stone-900/95 backdrop-blur-sm rounded-lg shadow-lg px-3 py-2 flex items-center gap-2">
+      <div className="bg-stone-900/95 backdrop-blur-sm rounded-full shadow-lg px-3 py-2 flex items-center gap-2">
         <Flag
           size={16}
           className={mode === 'reverse' ? 'text-amber-400' : 'text-stone-500'}
@@ -377,7 +377,7 @@ export function MobileInteractionToggle({
           onCheckedChange={onToggle}
           className="data-[state=checked]:bg-amber-500 data-[state=unchecked]:bg-amber-500"
         />
-        <MousePointer
+        <Unlock
           size={16}
           className={mode === 'default' ? 'text-amber-400' : 'text-stone-500'}
         />
