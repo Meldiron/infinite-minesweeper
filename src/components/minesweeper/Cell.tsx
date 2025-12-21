@@ -64,15 +64,35 @@ export const Cell = memo(function Cell({
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (!gameOver && !state.flagged) {
-      onReveal(x, y)
+    if (gameOver) return
+
+    if (mobileMode === 'default') {
+      // Default: click = reveal
+      if (!state.flagged) {
+        onReveal(x, y)
+      }
+    } else {
+      // Reverse: click = flag
+      if (!state.revealed) {
+        onFlag(x, y)
+      }
     }
   }
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (!gameOver && !state.revealed) {
-      onFlag(x, y)
+    if (gameOver) return
+
+    if (mobileMode === 'default') {
+      // Default: right-click = flag
+      if (!state.revealed) {
+        onFlag(x, y)
+      }
+    } else {
+      // Reverse: right-click = reveal
+      if (!state.flagged) {
+        onReveal(x, y)
+      }
     }
   }
 

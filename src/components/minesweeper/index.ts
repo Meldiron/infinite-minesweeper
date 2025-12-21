@@ -4,6 +4,6 @@ export {
   GameControls,
   GameInstructions,
   SaveIndicator,
-  MobileInteractionToggle,
+  InteractionModeToggle,
 } from './GameControls'
 export { useInfiniteGrid } from './useInfiniteGrid'

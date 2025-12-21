@@ -4,7 +4,7 @@ import {
   GameControls,
   GameInstructions,
   SaveIndicator,
-  MobileInteractionToggle,
+  InteractionModeToggle,
 } from './GameControls'
 import {
   useInfiniteGrid,
@@ -613,7 +613,7 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
       />
 
       {/* Mobile interaction mode toggle */}
-      <MobileInteractionToggle
+      <InteractionModeToggle
         mode={mobileMode}
         onToggle={() =>
           setMobileMode((m) => (m === 'default' ? 'reverse' : 'default'))
