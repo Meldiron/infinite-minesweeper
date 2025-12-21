@@ -9,7 +9,6 @@ import {
   Loader2,
   ChevronDown,
   HelpCircle,
-  Cloud,
   CloudOff,
   Check,
   AlertCircle,
@@ -305,9 +304,9 @@ export function SaveIndicator({
       }
     }
     return {
-      icon: <Cloud size={14} className="text-stone-500" />,
-      text: 'Ready',
-      color: 'text-stone-500',
+      icon: <Check size={14} className="text-green-400" />,
+      text: 'Saved',
+      color: 'text-green-400',
     }
   }
 
