@@ -9,7 +9,7 @@ import {
 import { Heart } from 'lucide-react'
 
 const BASE_CELL_SIZE = 32
-const MIN_ZOOM = 0.01
+const MIN_ZOOM = 0.05
 const MAX_ZOOM = 2
 const ZOOM_STEP = 0.1
 const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
@@ -145,11 +145,21 @@ export function MinesweeperGame() {
 
   // Zoom handlers
   const handleZoomIn = useCallback(() => {
-    setZoom((z) => Math.min(MAX_ZOOM, z + ZOOM_STEP))
+    setZoom((z) => {
+      // If at 5%, jump to 10%
+      if (z <= 0.05) return 0.1
+      return Math.min(MAX_ZOOM, z + ZOOM_STEP)
+    })
   }, [])
 
   const handleZoomOut = useCallback(() => {
-    setZoom((z) => Math.max(MIN_ZOOM, z - ZOOM_STEP))
+    setZoom((z) => {
+      // If at 10% or between 5-10%, go to 5%
+      if (z <= 0.1 && z > 0.05) return 0.05
+      // If already at 5%, stay there
+      if (z <= 0.05) return MIN_ZOOM
+      return Math.max(MIN_ZOOM, z - ZOOM_STEP)
+    })
   }, [])
 
   const handleResetView = useCallback(() => {
@@ -161,8 +171,25 @@ export function MinesweeperGame() {
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
       e.preventDefault()
-      const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP
-      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom + delta))
+
+      let newZoom: number
+      if (e.deltaY > 0) {
+        // Zooming out
+        if (zoom <= 0.1 && zoom > 0.05) {
+          newZoom = 0.05
+        } else if (zoom <= 0.05) {
+          newZoom = MIN_ZOOM
+        } else {
+          newZoom = Math.max(MIN_ZOOM, zoom - ZOOM_STEP)
+        }
+      } else {
+        // Zooming in
+        if (zoom <= 0.05) {
+          newZoom = 0.1
+        } else {
+          newZoom = Math.min(MAX_ZOOM, zoom + ZOOM_STEP)
+        }
+      }
 
       // Zoom towards mouse position
       const rect = containerRef.current?.getBoundingClientRect()
