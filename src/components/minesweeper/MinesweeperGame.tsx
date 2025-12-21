@@ -1,6 +1,11 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
-import { Cell } from './Cell'
-import { GameControls, GameInstructions, SaveIndicator } from './GameControls'
+import { Cell, type MobileInteractionMode } from './Cell'
+import {
+  GameControls,
+  GameInstructions,
+  SaveIndicator,
+  MobileInteractionToggle,
+} from './GameControls'
 import {
   useInfiniteGrid,
   SECTOR_SIZE,
@@ -55,6 +60,7 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
   const [instructionsCollapsed, setInstructionsCollapsed] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [mobileMode, setMobileMode] = useState<MobileInteractionMode>('default')
   const containerRef = useRef<HTMLDivElement>(null)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isMobile = useIsMobile()
@@ -606,6 +612,14 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
         onForceSave={performSave}
       />
 
+      {/* Mobile interaction mode toggle */}
+      <MobileInteractionToggle
+        mode={mobileMode}
+        onToggle={() =>
+          setMobileMode((m) => (m === 'default' ? 'reverse' : 'default'))
+        }
+      />
+
       {/* Sector position indicator - always visible */}
       <div className="absolute bottom-4 right-4 bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 pointer-events-none z-10">
         <div className="flex items-center gap-2">
@@ -694,6 +708,8 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
                   onFlag={toggleFlag}
                   gameOver={false}
                   sectorComplete={sectorComplete}
+                  isMobile={isMobile}
+                  mobileMode={mobileMode}
                 />
               )
             })}

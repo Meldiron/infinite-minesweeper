@@ -2,16 +2,18 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  Download,
+  HelpCircle,
+  ChevronDown,
+  Heart,
+  Loader2,
+  Check,
+  CloudOff,
+  AlertCircle,
+  MousePointer,
+  Flag,
   Grid3X3,
   Move,
-  Heart,
-  Download,
-  Loader2,
-  ChevronDown,
-  HelpCircle,
-  CloudOff,
-  Check,
-  AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -27,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Progress } from '@/components/ui/progress'
 import type { GameState } from './useInfiniteGrid'
+import type { MobileInteractionMode } from './Cell'
 
 type GameControlsProps = {
   zoom: number
@@ -345,6 +348,46 @@ export function SaveIndicator({
       >
         {status.icon}
         <span className="text-xs font-medium">{status.text}</span>
+      </button>
+    </div>
+  )
+}
+
+// Mobile interaction mode toggle component
+export function MobileInteractionToggle({
+  mode,
+  onToggle,
+}: {
+  mode: MobileInteractionMode
+  onToggle: () => void
+}) {
+  return (
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-auto md:hidden">
+      <button
+        onClick={onToggle}
+        className="bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 flex items-center gap-3"
+      >
+        <div className="flex items-center gap-2">
+          <MousePointer
+            size={14}
+            className={mode === 'default' ? 'text-amber-400' : 'text-stone-500'}
+          />
+          <span className="text-xs text-stone-400">Tap</span>
+          <span className="text-sm font-medium">
+            {mode === 'default' ? 'Open' : 'Flag'}
+          </span>
+        </div>
+        <div className="w-px h-4 bg-stone-600" />
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-stone-400">Hold</span>
+          <span className="text-sm font-medium">
+            {mode === 'default' ? 'Flag' : 'Open'}
+          </span>
+          <Flag
+            size={14}
+            className={mode === 'default' ? 'text-stone-500' : 'text-amber-400'}
+          />
+        </div>
       </button>
     </div>
   )

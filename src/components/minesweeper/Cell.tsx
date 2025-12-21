@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useRef, useCallback } from 'react'
 import { Flag, Bomb } from 'lucide-react'
 import type { CellState } from './useInfiniteGrid'
 
@@ -25,6 +25,10 @@ const NUMBER_COLORS_COMPLETE: Record<number, string> = {
   8: 'text-stone-800',
 }
 
+const LONG_PRESS_DURATION = 500 // 500ms for long press
+
+export type MobileInteractionMode = 'default' | 'reverse'
+
 type CellProps = {
   x: number
   y: number
@@ -36,6 +40,8 @@ type CellProps = {
   onFlag: (x: number, y: number) => void
   gameOver: boolean
   sectorComplete: boolean
+  isMobile?: boolean
+  mobileMode?: MobileInteractionMode
 }
 
 export const Cell = memo(function Cell({
@@ -49,7 +55,13 @@ export const Cell = memo(function Cell({
   onFlag,
   gameOver,
   sectorComplete,
+  isMobile = false,
+  mobileMode = 'default',
 }: CellProps) {
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const isLongPressRef = useRef(false)
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
+
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
     if (!gameOver && !state.flagged) {
@@ -63,6 +75,112 @@ export const Cell = memo(function Cell({
       onFlag(x, y)
     }
   }
+
+  // Mobile touch handlers
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isMobile || gameOver) return
+
+      const touch = e.touches[0]
+      touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
+      isLongPressRef.current = false
+
+      longPressTimerRef.current = setTimeout(() => {
+        isLongPressRef.current = true
+
+        // Long press action based on mode
+        if (mobileMode === 'default') {
+          // Default: long press = flag
+          if (!state.revealed) {
+            onFlag(x, y)
+          }
+        } else {
+          // Reverse: long press = reveal
+          if (!state.flagged) {
+            onReveal(x, y)
+          }
+        }
+      }, LONG_PRESS_DURATION)
+    },
+    [
+      isMobile,
+      gameOver,
+      mobileMode,
+      state.revealed,
+      state.flagged,
+      onFlag,
+      onReveal,
+      x,
+      y,
+    ],
+  )
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartPosRef.current) return
+
+    const touch = e.touches[0]
+    const dx = Math.abs(touch.clientX - touchStartPosRef.current.x)
+    const dy = Math.abs(touch.clientY - touchStartPosRef.current.y)
+
+    // Cancel long press if finger moved too much (user is panning)
+    if (dx > 10 || dy > 10) {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current)
+        longPressTimerRef.current = null
+      }
+    }
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isMobile || gameOver) return
+
+    // Clear the long press timer
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+
+    // If it was a long press, action already happened
+    if (isLongPressRef.current) {
+      isLongPressRef.current = false
+      touchStartPosRef.current = null
+      return
+    }
+
+    // Short tap action based on mode
+    if (mobileMode === 'default') {
+      // Default: tap = reveal
+      if (!state.flagged) {
+        onReveal(x, y)
+      }
+    } else {
+      // Reverse: tap = flag
+      if (!state.revealed) {
+        onFlag(x, y)
+      }
+    }
+
+    touchStartPosRef.current = null
+  }, [
+    isMobile,
+    gameOver,
+    mobileMode,
+    state.flagged,
+    state.revealed,
+    onReveal,
+    onFlag,
+    x,
+    y,
+  ])
+
+  const handleTouchCancel = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    isLongPressRef.current = false
+    touchStartPosRef.current = null
+  }, [])
 
   const fontSize = Math.max(10, size * 0.5)
   const iconSize = Math.max(10, size * 0.45)
@@ -84,6 +202,16 @@ export const Cell = memo(function Cell({
     : 'bg-gradient-to-br from-stone-700 to-stone-800 border-t-2 border-l-2 border-stone-600 border-r-2 border-b-2 border-r-stone-900 border-b-stone-900 hover:from-stone-650 hover:to-stone-750'
 
   const bombIconColor = sectorComplete ? 'text-green-800' : 'text-stone-400'
+
+  // Common touch props for interactive cells
+  const touchProps = isMobile
+    ? {
+        onTouchStart: handleTouchStart,
+        onTouchMove: handleTouchMove,
+        onTouchEnd: handleTouchEnd,
+        onTouchCancel: handleTouchCancel,
+      }
+    : {}
 
   // Revealed cell
   if (state.revealed) {
@@ -152,8 +280,9 @@ export const Cell = memo(function Cell({
           left: x * size,
           top: y * size,
         }}
-        onClick={handleClick}
+        onClick={isMobile ? undefined : handleClick}
         onContextMenu={handleContextMenu}
+        {...touchProps}
       >
         <Flag
           size={iconSize}
@@ -174,8 +303,9 @@ export const Cell = memo(function Cell({
         left: x * size,
         top: y * size,
       }}
-      onClick={handleClick}
+      onClick={isMobile ? undefined : handleClick}
       onContextMenu={handleContextMenu}
+      {...touchProps}
     />
   )
 })
