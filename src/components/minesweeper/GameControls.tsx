@@ -8,6 +8,17 @@ import {
   Heart,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import type { GameState } from './useInfiniteGrid'
 
 type GameControlsProps = {
@@ -118,15 +129,40 @@ export function GameControls({
           <Move size={18} />
         </Button>
 
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onReset}
-          className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0"
-          title="New game"
-        >
-          <RotateCcw size={18} />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0"
+              title="New game"
+            >
+              <RotateCcw size={18} />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-stone-900 border-stone-700">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-stone-100">
+                Start New Game?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-stone-400">
+                This will reset all your progress and start a fresh game. This
+                action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-stone-800 text-stone-100 border-stone-600 hover:bg-stone-700 hover:text-stone-100">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onReset}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                Reset Game
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )
