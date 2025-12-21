@@ -1,5 +1,8 @@
 import { useState, useCallback, useRef } from 'react'
 
+// Sector size for completion tracking
+export const SECTOR_SIZE = 8
+
 // Deterministic hash function for consistent mine placement
 function hashCoord(x: number, y: number, seed: number = 12345): number {
   let h = seed
@@ -33,6 +36,17 @@ export function getNeighbors(x: number, y: number): [number, number][] {
   ]
 }
 
+// Get sector coordinates for a cell
+export function getSectorCoords(
+  x: number,
+  y: number,
+): { sectorX: number; sectorY: number } {
+  return {
+    sectorX: Math.floor(x / SECTOR_SIZE),
+    sectorY: Math.floor(y / SECTOR_SIZE),
+  }
+}
+
 export type CellState = {
   revealed: boolean
   flagged: boolean
@@ -49,11 +63,21 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
   const [revealedCount, setRevealedCount] = useState(0)
   const [flaggedCount, setFlaggedCount] = useState(0)
 
+  // Cache for completed sectors
+  const [completedSectors, setCompletedSectors] = useState<Set<string>>(
+    new Set(),
+  )
+
   // Track removed mines (for first click protection)
   const removedMinesRef = useRef<Set<string>>(new Set())
   const isFirstClickRef = useRef<boolean>(true)
 
   const getKey = useCallback((x: number, y: number) => `${x},${y}`, [])
+
+  const getSectorKey = useCallback(
+    (sectorX: number, sectorY: number) => `${sectorX},${sectorY}`,
+    [],
+  )
 
   // Check if cell has mine, considering removed mines
   const hasMine = useCallback(
@@ -79,6 +103,84 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
       return cellStates.get(key) || { revealed: false, flagged: false }
     },
     [cellStates, getKey],
+  )
+
+  // Check if a sector is complete (all cells correctly revealed or flagged)
+  const checkSectorComplete = useCallback(
+    (
+      sectorX: number,
+      sectorY: number,
+      states: Map<string, CellState>,
+    ): boolean => {
+      const startX = sectorX * SECTOR_SIZE
+      const startY = sectorY * SECTOR_SIZE
+
+      for (let dy = 0; dy < SECTOR_SIZE; dy++) {
+        for (let dx = 0; dx < SECTOR_SIZE; dx++) {
+          const x = startX + dx
+          const y = startY + dy
+          const key = getKey(x, y)
+          const state = states.get(key)
+          const isMine = hasMine(x, y)
+
+          if (isMine) {
+            // Mine cells must be flagged
+            if (!state?.flagged) return false
+          } else {
+            // Non-mine cells must be revealed
+            if (!state?.revealed) return false
+          }
+        }
+      }
+
+      return true
+    },
+    [getKey, hasMine],
+  )
+
+  // Check if a cell's sector is complete
+  const isSectorComplete = useCallback(
+    (x: number, y: number): boolean => {
+      const { sectorX, sectorY } = getSectorCoords(x, y)
+      const sectorKey = getSectorKey(sectorX, sectorY)
+      return completedSectors.has(sectorKey)
+    },
+    [completedSectors, getSectorKey],
+  )
+
+  // Update completed sectors after state changes
+  const updateCompletedSectors = useCallback(
+    (newStates: Map<string, CellState>, affectedCells: [number, number][]) => {
+      const sectorsToCheck = new Set<string>()
+
+      // Collect all affected sectors
+      for (const [x, y] of affectedCells) {
+        const { sectorX, sectorY } = getSectorCoords(x, y)
+        sectorsToCheck.add(getSectorKey(sectorX, sectorY))
+      }
+
+      // Check each affected sector
+      const newCompletedSectors = new Set(completedSectors)
+      let changed = false
+
+      for (const sectorKey of sectorsToCheck) {
+        const [sectorX, sectorY] = sectorKey.split(',').map(Number)
+        const isComplete = checkSectorComplete(sectorX, sectorY, newStates)
+
+        if (isComplete && !newCompletedSectors.has(sectorKey)) {
+          newCompletedSectors.add(sectorKey)
+          changed = true
+        } else if (!isComplete && newCompletedSectors.has(sectorKey)) {
+          newCompletedSectors.delete(sectorKey)
+          changed = true
+        }
+      }
+
+      if (changed) {
+        setCompletedSectors(newCompletedSectors)
+      }
+    },
+    [completedSectors, getSectorKey, checkSectorComplete],
   )
 
   const revealCell = useCallback(
@@ -173,6 +275,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
 
       const newStates = new Map(cellStates)
       const toReveal: [number, number][] = [[x, y]]
+      const revealedCells: [number, number][] = []
       let revealed = 0
 
       while (toReveal.length > 0) {
@@ -196,6 +299,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
         }
 
         newStates.set(cellKey, { revealed: true, flagged: false })
+        revealedCells.push([cx, cy])
         revealed++
 
         const adjacentMines = countAdjacentMines(cx, cy)
@@ -214,8 +318,23 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
 
       setCellStates(newStates)
       setRevealedCount((prev) => prev + revealed)
+
+      // Check for sector completion
+      if (revealedCells.length > 0) {
+        updateCompletedSectors(newStates, revealedCells)
+      }
     },
-    [cellStates, gameState, getKey, seed, density, hasMine, countAdjacentMines],
+    [
+      cellStates,
+      gameState,
+      getKey,
+      seed,
+      density,
+      hasMine,
+      countAdjacentMines,
+      getCellState,
+      updateCompletedSectors,
+    ],
   )
 
   const toggleFlag = useCallback(
@@ -232,8 +351,11 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
       newStates.set(key, { revealed: false, flagged: !wasFlagged })
       setCellStates(newStates)
       setFlaggedCount((prev) => prev + (wasFlagged ? -1 : 1))
+
+      // Check for sector completion after flagging
+      updateCompletedSectors(newStates, [[x, y]])
     },
-    [cellStates, gameState, getKey],
+    [cellStates, gameState, getKey, updateCompletedSectors],
   )
 
   const resetGame = useCallback(() => {
@@ -241,6 +363,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
     setGameState('playing')
     setRevealedCount(0)
     setFlaggedCount(0)
+    setCompletedSectors(new Set())
     removedMinesRef.current = new Set()
     isFirstClickRef.current = true
   }, [])
@@ -255,5 +378,6 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
     flaggedCount,
     hasMine,
     countAdjacentMines,
+    isSectorComplete,
   }
 }

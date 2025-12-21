@@ -30,6 +30,7 @@ export function MinesweeperGame() {
     flaggedCount,
     hasMine,
     countAdjacentMines,
+    isSectorComplete,
   } = useInfiniteGrid(seed, 0.15)
 
   // Track container size
@@ -245,6 +246,7 @@ export function MinesweeperGame() {
             const state = getCellState(x, y)
             const isMine = hasMine(x, y)
             const adjacentMines = countAdjacentMines(x, y)
+            const sectorComplete = isSectorComplete(x, y)
 
             return (
               <Cell
@@ -259,6 +261,7 @@ export function MinesweeperGame() {
                 onFlag={toggleFlag}
                 gameOver={gameState === 'lost'}
                 theme={theme}
+                sectorComplete={sectorComplete}
               />
             )
           })}
