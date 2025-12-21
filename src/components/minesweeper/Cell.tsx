@@ -43,6 +43,7 @@ type CellProps = {
   isMobile?: boolean
   mobileMode?: MobileInteractionMode
   onLongPressAction?: () => void
+  shouldAllowClick?: () => boolean
 }
 
 export const Cell = memo(function Cell({
@@ -59,6 +60,7 @@ export const Cell = memo(function Cell({
   isMobile = false,
   mobileMode = 'default',
   onLongPressAction,
+  shouldAllowClick,
 }: CellProps) {
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPressRef = useRef(false)
@@ -68,6 +70,11 @@ export const Cell = memo(function Cell({
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
     if (gameOver) return
+
+    // Check if click should be allowed (not after a drag)
+    if (shouldAllowClick && !shouldAllowClick()) {
+      return
+    }
 
     if (mobileMode === 'default') {
       // Default: click = reveal
@@ -85,6 +92,11 @@ export const Cell = memo(function Cell({
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
     if (gameOver) return
+
+    // Check if click should be allowed (not after a drag)
+    if (shouldAllowClick && !shouldAllowClick()) {
+      return
+    }
 
     if (mobileMode === 'default') {
       // Default: right-click = flag

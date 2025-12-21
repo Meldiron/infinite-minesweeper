@@ -30,6 +30,7 @@ const EXPORT_MAX_SIZE = 1000 // Maximum export size in pixels (1000x1000)
 const EXPORT_CHUNK_SIZE = 50 // Process 50 rows at a time to prevent freezing
 const AUTO_SAVE_DELAY = 3000 // 3 seconds of inactivity before auto-save
 const PREFERENCES_SAVE_DELAY = 1000 // 1 second delay for preferences
+const DRAG_THRESHOLD = 5 // Pixels moved before considering it a drag
 
 // Detect mobile during initialization (before hooks are available)
 const getInitialZoom = () => {
@@ -105,6 +106,10 @@ export function MinesweeperGame({
   const preferencesSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isInitialMountRef = useRef(true)
   const isMobile = useIsMobile()
+
+  // Track drag state for click prevention
+  const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null)
+  const hasDraggedRef = useRef(false)
 
   const saveGame = useServerFn(saveGameFn)
   const deleteGameSave = useServerFn(deleteGameSaveFn)
@@ -571,6 +576,9 @@ export function MinesweeperGame({
         // Left click
         setIsDragging(true)
         setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y })
+        // Track mouse down position for drag detection
+        mouseDownPosRef.current = { x: e.clientX, y: e.clientY }
+        hasDraggedRef.current = false
       }
     },
     [offset],
@@ -588,6 +596,15 @@ export function MinesweeperGame({
       }
 
       if (isDragging) {
+        // Check if we've moved enough to consider it a drag
+        if (mouseDownPosRef.current) {
+          const dx = Math.abs(e.clientX - mouseDownPosRef.current.x)
+          const dy = Math.abs(e.clientY - mouseDownPosRef.current.y)
+          if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+            hasDraggedRef.current = true
+          }
+        }
+
         setOffset({
           x: e.clientX - dragStart.x,
           y: e.clientY - dragStart.y,
@@ -599,11 +616,23 @@ export function MinesweeperGame({
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
+    mouseDownPosRef.current = null
   }, [])
 
   const handleMouseLeave = useCallback(() => {
     setIsDragging(false)
     setMousePos(null)
+    mouseDownPosRef.current = null
+    hasDraggedRef.current = false
+  }, [])
+
+  // Check if a click should be allowed (not after a drag)
+  const shouldAllowClick = useCallback(() => {
+    if (hasDraggedRef.current) {
+      hasDraggedRef.current = false
+      return false
+    }
+    return true
   }, [])
 
   // Touch handlers for mobile
@@ -848,6 +877,7 @@ export function MinesweeperGame({
                   isMobile={isMobile}
                   mobileMode={mobileMode}
                   onLongPressAction={triggerFlash}
+                  shouldAllowClick={shouldAllowClick}
                 />
               )
             })}
