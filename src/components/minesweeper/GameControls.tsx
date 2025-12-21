@@ -7,6 +7,7 @@ import {
   Move,
   Heart,
   Download,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,6 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Progress } from '@/components/ui/progress'
 import type { GameState } from './useInfiniteGrid'
 
 type GameControlsProps = {
@@ -36,6 +38,7 @@ type GameControlsProps = {
   timeUntilNextLife: number | null
   onExportPNG?: () => void
   isAtMinZoom?: boolean
+  exportProgress?: number | null
 }
 
 function formatTime(ms: number): string {
@@ -58,7 +61,10 @@ export function GameControls({
   timeUntilNextLife,
   onExportPNG,
   isAtMinZoom,
+  exportProgress,
 }: GameControlsProps) {
+  const isExporting = exportProgress !== null && exportProgress !== undefined
+
   return (
     <div className="absolute top-4 left-4 right-4 flex flex-col gap-2 pointer-events-none z-10">
       {/* First row */}
@@ -174,15 +180,35 @@ export function GameControls({
       </div>
 
       {/* Second row - Export button (only at min zoom) */}
-      {isAtMinZoom && onExportPNG && (
+      {(isAtMinZoom || isExporting) && onExportPNG && (
         <div className="flex justify-end">
-          <Button
-            onClick={onExportPNG}
-            className="bg-stone-900/95 hover:bg-stone-800 text-stone-100 backdrop-blur-sm shadow-lg border-0 gap-2 pointer-events-auto"
-          >
-            <Download size={16} />
-            Export Map as PNG
-          </Button>
+          <div className="bg-stone-900/95 backdrop-blur-sm rounded-lg shadow-lg pointer-events-auto overflow-hidden">
+            {isExporting ? (
+              <div className="px-4 py-2 flex items-center gap-3 min-w-[200px]">
+                <Loader2 size={16} className="text-amber-500 animate-spin" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-stone-100 text-sm">Exporting...</span>
+                    <span className="text-stone-400 text-xs font-mono">
+                      {exportProgress}%
+                    </span>
+                  </div>
+                  <Progress
+                    value={exportProgress}
+                    className="h-1.5 bg-stone-700"
+                  />
+                </div>
+              </div>
+            ) : (
+              <Button
+                onClick={onExportPNG}
+                className="bg-transparent hover:bg-stone-800 text-stone-100 border-0 gap-2"
+              >
+                <Download size={16} />
+                Export Map as PNG
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>

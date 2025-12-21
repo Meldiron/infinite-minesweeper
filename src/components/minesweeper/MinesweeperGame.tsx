@@ -13,7 +13,8 @@ const MIN_ZOOM = 0.05
 const MAX_ZOOM = 2
 const ZOOM_STEP = 0.1
 const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
-const EXPORT_MAX_SIZE = 5000 // Maximum export size in pixels
+const EXPORT_MAX_SIZE = 1000 // Maximum export size in pixels (1000x1000)
+const EXPORT_CHUNK_SIZE = 50 // Process 50 rows at a time to prevent freezing
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.ceil(ms / 1000)
@@ -32,6 +33,7 @@ export function MinesweeperGame() {
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(
     null,
   )
+  const [exportProgress, setExportProgress] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -86,13 +88,22 @@ export function MinesweeperGame() {
     return { x: sectorX, y: sectorY }
   }, [mousePos, offset, cellSize])
 
-  // Export board as PNG (1 pixel per sector, max 5000x5000, centered at 0,0)
-  const handleExportPNG = useCallback(() => {
+  // Export board as PNG (1 pixel per sector, max 1000x1000, centered at 0,0)
+  // Uses chunked processing to prevent browser freezing
+  const handleExportPNG = useCallback(async () => {
+    // Prevent multiple exports at once
+    if (exportProgress !== null) return
+
+    setExportProgress(0)
+
     const canvas = document.createElement('canvas')
     canvas.width = EXPORT_MAX_SIZE
     canvas.height = EXPORT_MAX_SIZE
     const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    if (!ctx) {
+      setExportProgress(null)
+      return
+    }
 
     // Fill with untouched color (dark gray)
     ctx.fillStyle = '#44403c' // stone-700
@@ -110,24 +121,47 @@ export function MinesweeperGame() {
       finished: '#15803d', // green-700
     }
 
-    // Draw each sector as a single pixel
-    for (let py = 0; py < EXPORT_MAX_SIZE; py++) {
-      for (let px = 0; px < EXPORT_MAX_SIZE; px++) {
-        const sectorX = minSectorX + px
-        const sectorY = minSectorY + py
-        const state = getSectorState(sectorX, sectorY)
+    // Process in chunks to prevent freezing
+    const totalRows = EXPORT_MAX_SIZE
+    let currentRow = 0
 
-        // Only draw if not untouched (untouched is already the background)
-        if (state !== 'untouched') {
-          ctx.fillStyle = sectorColors[state]
-          ctx.fillRect(px, py, 1, 1)
+    const processChunk = (): Promise<void> => {
+      return new Promise((resolve) => {
+        const endRow = Math.min(currentRow + EXPORT_CHUNK_SIZE, totalRows)
+
+        for (let py = currentRow; py < endRow; py++) {
+          for (let px = 0; px < EXPORT_MAX_SIZE; px++) {
+            const sectorX = minSectorX + px
+            const sectorY = minSectorY + py
+            const state = getSectorState(sectorX, sectorY)
+
+            // Only draw if not untouched (untouched is already the background)
+            if (state !== 'untouched') {
+              ctx.fillStyle = sectorColors[state]
+              ctx.fillRect(px, py, 1, 1)
+            }
+          }
         }
-      }
+
+        currentRow = endRow
+        setExportProgress(Math.round((currentRow / totalRows) * 100))
+
+        // Yield to browser using requestAnimationFrame
+        requestAnimationFrame(() => resolve())
+      })
+    }
+
+    // Process all chunks
+    while (currentRow < totalRows) {
+      await processChunk()
     }
 
     // Convert to PNG and download
     canvas.toBlob((blob) => {
-      if (!blob) return
+      if (!blob) {
+        setExportProgress(null)
+        return
+      }
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -136,8 +170,9 @@ export function MinesweeperGame() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
+      setExportProgress(null)
     }, 'image/png')
-  }, [getSectorState])
+  }, [getSectorState, exportProgress])
 
   // Check if at minimum zoom (5%)
   const isAtMinZoom = zoom <= 0.05
@@ -414,6 +449,7 @@ export function MinesweeperGame() {
         timeUntilNextLife={timeUntilNextLife}
         onExportPNG={handleExportPNG}
         isAtMinZoom={isAtMinZoom}
+        exportProgress={exportProgress}
       />
 
       <GameInstructions />
