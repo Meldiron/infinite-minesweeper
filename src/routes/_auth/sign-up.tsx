@@ -28,10 +28,16 @@ export const Route = createFileRoute('/_auth/sign-up')({
   validateSearch: searchSchema,
 })
 
-const signUpSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-})
+const signUpSchema = z
+  .object({
+    email: z.string().email('Please enter a valid email address'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
 
 function SignUpPage() {
   const search = useSearch({ from: '/_auth/sign-up' })
@@ -43,6 +49,7 @@ function SignUpPage() {
     defaultValues: {
       email: '',
       password: '',
+      confirmPassword: '',
     },
   })
 
@@ -91,6 +98,7 @@ function SignUpPage() {
         defaultValues={{
           email: '',
           password: '',
+          confirmPassword: '',
         }}
         onSubmit={(data) => signUpMutation.mutate(data)}
         submitText="Sign up"
@@ -113,6 +121,14 @@ function SignUpPage() {
               name="password"
               label="Password"
               placeholder="Enter your password"
+              type="password"
+            />
+
+            <AuthField
+              control={form.control}
+              name="confirmPassword"
+              label="Confirm Password"
+              placeholder="Confirm your password"
               type="password"
             />
           </>
