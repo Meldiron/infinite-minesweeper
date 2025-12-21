@@ -119,17 +119,51 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
         return
       }
 
-      // Handle first click - ensure it's never a mine
+      // Handle first click - ensure it's never a mine and has large empty opening
       if (isFirstClickRef.current) {
         isFirstClickRef.current = false
 
-        // If first click is on a mine, remove it
+        // Remove mine from clicked cell
         if (hasMineBase(x, y, seed, density)) {
           removedMinesRef.current.add(key)
         }
 
-        // Also remove mines from immediate neighbors to create an opening
-        for (const [nx, ny] of getNeighbors(x, y)) {
+        // Remove mines from immediate neighbors (8 cells)
+        const immediateNeighbors = getNeighbors(x, y)
+        for (const [nx, ny] of immediateNeighbors) {
+          const neighborKey = getKey(nx, ny)
+          if (hasMineBase(nx, ny, seed, density)) {
+            removedMinesRef.current.add(neighborKey)
+          }
+        }
+
+        // Remove mines from second ring of neighbors to ensure 15+ empty cells
+        // This covers a 5x5 area centered on the click (minus corners for a more natural shape)
+        const secondRing: [number, number][] = [
+          // Top row (y - 2)
+          [x - 2, y - 2],
+          [x - 1, y - 2],
+          [x, y - 2],
+          [x + 1, y - 2],
+          [x + 2, y - 2],
+          // Second row edges (y - 1)
+          [x - 2, y - 1],
+          [x + 2, y - 1],
+          // Middle row edges (y)
+          [x - 2, y],
+          [x + 2, y],
+          // Fourth row edges (y + 1)
+          [x - 2, y + 1],
+          [x + 2, y + 1],
+          // Bottom row (y + 2)
+          [x - 2, y + 2],
+          [x - 1, y + 2],
+          [x, y + 2],
+          [x + 1, y + 2],
+          [x + 2, y + 2],
+        ]
+
+        for (const [nx, ny] of secondRing) {
           const neighborKey = getKey(nx, ny)
           if (hasMineBase(nx, ny, seed, density)) {
             removedMinesRef.current.add(neighborKey)
