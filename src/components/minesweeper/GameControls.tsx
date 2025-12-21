@@ -31,6 +31,12 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Progress } from '@/components/ui/progress'
 import { Switch } from '@/components/ui/switch'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import type { GameState } from './useInfiniteGrid'
 import type { MobileInteractionMode } from './Cell'
 
@@ -105,12 +111,24 @@ export function GameControls({
               )}
             </div>
             <div className="w-px h-5 bg-stone-600" />
-            <div className="flex items-center gap-2">
-              <Grid3X3 size={18} className="text-stone-300" />
-              <span className="font-mono text-sm font-medium">
-                {revealedCount}
-              </span>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-2 cursor-default">
+                    <Grid3X3 size={18} className="text-stone-300" />
+                    <span className="font-mono text-sm font-medium">
+                      {revealedCount}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  className="bg-stone-800 text-stone-100 border-stone-700"
+                >
+                  <p>Opened tiles</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           <Button
