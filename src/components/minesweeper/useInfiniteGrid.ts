@@ -3,6 +3,9 @@ import { useState, useCallback, useRef } from 'react'
 // Sector size for completion tracking
 export const SECTOR_SIZE = 8
 
+// Sector states for zoomed-out view
+export type SectorState = 'untouched' | 'in-progress' | 'finished'
+
 // Deterministic hash function for consistent mine placement
 function hashCoord(x: number, y: number, seed: number = 12345): number {
   let h = seed
@@ -146,6 +149,38 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
       return completedSectors.has(sectorKey)
     },
     [completedSectors, getSectorKey],
+  )
+
+  // Get the state of a sector (untouched, in-progress, finished)
+  const getSectorState = useCallback(
+    (sectorX: number, sectorY: number): SectorState => {
+      const sectorKey = getSectorKey(sectorX, sectorY)
+
+      // Check if sector is complete
+      if (completedSectors.has(sectorKey)) {
+        return 'finished'
+      }
+
+      // Check if any cell in the sector has been interacted with
+      const startX = sectorX * SECTOR_SIZE
+      const startY = sectorY * SECTOR_SIZE
+
+      for (let dy = 0; dy < SECTOR_SIZE; dy++) {
+        for (let dx = 0; dx < SECTOR_SIZE; dx++) {
+          const x = startX + dx
+          const y = startY + dy
+          const key = getKey(x, y)
+          const state = cellStates.get(key)
+
+          if (state?.revealed || state?.flagged) {
+            return 'in-progress'
+          }
+        }
+      }
+
+      return 'untouched'
+    },
+    [cellStates, completedSectors, getKey, getSectorKey],
   )
 
   // Update completed sectors after state changes
@@ -379,5 +414,6 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
     hasMine,
     countAdjacentMines,
     isSectorComplete,
+    getSectorState,
   }
 }

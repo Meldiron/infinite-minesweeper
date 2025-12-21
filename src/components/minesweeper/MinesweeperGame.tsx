@@ -1,12 +1,17 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Cell } from './Cell'
 import { GameControls, GameInstructions } from './GameControls'
-import { useInfiniteGrid, SECTOR_SIZE } from './useInfiniteGrid'
+import {
+  useInfiniteGrid,
+  SECTOR_SIZE,
+  type SectorState,
+} from './useInfiniteGrid'
 
 const BASE_CELL_SIZE = 32
 const MIN_ZOOM = 0.25
 const MAX_ZOOM = 2
 const ZOOM_STEP = 0.1
+const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
 
 export type Theme = 'light' | 'dark'
 
@@ -31,6 +36,7 @@ export function MinesweeperGame() {
     hasMine,
     countAdjacentMines,
     isSectorComplete,
+    getSectorState,
   } = useInfiniteGrid(seed, 0.15)
 
   // Track container size
@@ -51,9 +57,11 @@ export function MinesweeperGame() {
 
   const cellSize = BASE_CELL_SIZE * zoom
   const sectorPixelSize = SECTOR_SIZE * cellSize
+  const isZoomedOut = zoom <= SECTOR_VIEW_THRESHOLD
 
-  // Calculate visible cells
+  // Calculate visible cells (only when not in sector view)
   const visibleCells = useMemo(() => {
+    if (isZoomedOut) return []
     if (containerSize.width === 0 || containerSize.height === 0) return []
 
     const padding = 2 // Extra cells to render outside viewport
@@ -71,7 +79,29 @@ export function MinesweeperGame() {
       }
     }
     return cells
-  }, [containerSize, offset, cellSize])
+  }, [containerSize, offset, cellSize, isZoomedOut])
+
+  // Calculate visible sectors (only when in sector view)
+  const visibleSectors = useMemo(() => {
+    if (!isZoomedOut) return []
+    if (containerSize.width === 0 || containerSize.height === 0) return []
+
+    const padding = 1
+    const startSectorX = Math.floor(-offset.x / sectorPixelSize) - padding
+    const endSectorX =
+      Math.ceil((containerSize.width - offset.x) / sectorPixelSize) + padding
+    const startSectorY = Math.floor(-offset.y / sectorPixelSize) - padding
+    const endSectorY =
+      Math.ceil((containerSize.height - offset.y) / sectorPixelSize) + padding
+
+    const sectors: { sectorX: number; sectorY: number }[] = []
+    for (let sy = startSectorY; sy <= endSectorY; sy++) {
+      for (let sx = startSectorX; sx <= endSectorX; sx++) {
+        sectors.push({ sectorX: sx, sectorY: sy })
+      }
+    }
+    return sectors
+  }, [containerSize, offset, sectorPixelSize, isZoomedOut])
 
   // Calculate visible sector grid lines
   const sectorLines = useMemo(() => {
@@ -235,6 +265,29 @@ export function MinesweeperGame() {
   const sectorLineColor =
     theme === 'dark' ? 'bg-amber-500/60' : 'bg-amber-600/70'
 
+  // Sector colors based on state and theme
+  const getSectorColors = (state: SectorState): string => {
+    if (theme === 'dark') {
+      switch (state) {
+        case 'untouched':
+          return 'bg-stone-700 border-stone-600'
+        case 'in-progress':
+          return 'bg-amber-700 border-amber-600'
+        case 'finished':
+          return 'bg-green-700 border-green-600'
+      }
+    } else {
+      switch (state) {
+        case 'untouched':
+          return 'bg-stone-400 border-stone-500'
+        case 'in-progress':
+          return 'bg-amber-400 border-amber-500'
+        case 'finished':
+          return 'bg-green-400 border-green-500'
+      }
+    }
+  }
+
   return (
     <div
       className={`relative w-full h-screen ${bgColor} overflow-hidden select-none transition-colors duration-300`}
@@ -274,58 +327,81 @@ export function MinesweeperGame() {
             willChange: 'transform',
           }}
         >
-          {/* Render cells */}
-          {visibleCells.map(({ x, y }) => {
-            const state = getCellState(x, y)
-            const isMine = hasMine(x, y)
-            const adjacentMines = countAdjacentMines(x, y)
-            const sectorComplete = isSectorComplete(x, y)
+          {/* Render cells when zoomed in */}
+          {!isZoomedOut &&
+            visibleCells.map(({ x, y }) => {
+              const state = getCellState(x, y)
+              const isMine = hasMine(x, y)
+              const adjacentMines = countAdjacentMines(x, y)
+              const sectorComplete = isSectorComplete(x, y)
 
-            return (
-              <Cell
-                key={`${x},${y}`}
-                x={x}
-                y={y}
-                size={cellSize}
-                state={state}
-                isMine={isMine}
-                adjacentMines={adjacentMines}
-                onReveal={revealCell}
-                onFlag={toggleFlag}
-                gameOver={gameState === 'lost'}
-                theme={theme}
-                sectorComplete={sectorComplete}
+              return (
+                <Cell
+                  key={`${x},${y}`}
+                  x={x}
+                  y={y}
+                  size={cellSize}
+                  state={state}
+                  isMine={isMine}
+                  adjacentMines={adjacentMines}
+                  onReveal={revealCell}
+                  onFlag={toggleFlag}
+                  gameOver={gameState === 'lost'}
+                  theme={theme}
+                  sectorComplete={sectorComplete}
+                />
+              )
+            })}
+
+          {/* Render sector blocks when zoomed out */}
+          {isZoomedOut &&
+            visibleSectors.map(({ sectorX, sectorY }) => {
+              const state = getSectorState(sectorX, sectorY)
+              const colors = getSectorColors(state)
+
+              return (
+                <div
+                  key={`sector-${sectorX},${sectorY}`}
+                  className={`absolute ${colors} border-2 transition-colors duration-200`}
+                  style={{
+                    left: sectorX * sectorPixelSize,
+                    top: sectorY * sectorPixelSize,
+                    width: sectorPixelSize,
+                    height: sectorPixelSize,
+                  }}
+                />
+              )
+            })}
+
+          {/* Render sector grid lines - vertical (only when zoomed in) */}
+          {!isZoomedOut &&
+            sectorLines.vertical.map((x) => (
+              <div
+                key={`v-${x}`}
+                className={`absolute ${sectorLineColor} pointer-events-none`}
+                style={{
+                  left: x,
+                  top: -10000,
+                  width: 2,
+                  height: 20000,
+                }}
               />
-            )
-          })}
+            ))}
 
-          {/* Render sector grid lines - vertical */}
-          {sectorLines.vertical.map((x) => (
-            <div
-              key={`v-${x}`}
-              className={`absolute ${sectorLineColor} pointer-events-none`}
-              style={{
-                left: x,
-                top: -10000,
-                width: 2,
-                height: 20000,
-              }}
-            />
-          ))}
-
-          {/* Render sector grid lines - horizontal */}
-          {sectorLines.horizontal.map((y) => (
-            <div
-              key={`h-${y}`}
-              className={`absolute ${sectorLineColor} pointer-events-none`}
-              style={{
-                left: -10000,
-                top: y,
-                width: 20000,
-                height: 2,
-              }}
-            />
-          ))}
+          {/* Render sector grid lines - horizontal (only when zoomed in) */}
+          {!isZoomedOut &&
+            sectorLines.horizontal.map((y) => (
+              <div
+                key={`h-${y}`}
+                className={`absolute ${sectorLineColor} pointer-events-none`}
+                style={{
+                  left: -10000,
+                  top: y,
+                  width: 20000,
+                  height: 2,
+                }}
+              />
+            ))}
         </div>
       </div>
     </div>

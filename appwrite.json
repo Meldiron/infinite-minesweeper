@@ -1,3 +1,113 @@
 {
-  "projectId": "6948120100174c6a021b"
+  "projectId": "6948120100174c6a021b",
+  "databases": [
+    {
+      "$id": "imagine-project-db",
+      "name": "Imagine Project DB",
+      "enabled": true
+    }
+  ],
+  "collections": [
+    {
+      "$id": "minesweeper_saves",
+      "$permissions": [
+        "create(\"any\")",
+        "read(\"any\")",
+        "update(\"any\")",
+        "delete(\"any\")"
+      ],
+      "databaseId": "imagine-project-db",
+      "name": "minesweeper_saves",
+      "enabled": true,
+      "documentSecurity": true,
+      "attributes": [
+        {
+          "key": "createdBy",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 64,
+          "default": null,
+          "encrypt": false
+        },
+        {
+          "key": "cellStates",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 1000000,
+          "default": null,
+          "encrypt": false
+        },
+        {
+          "key": "removedMines",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 100000,
+          "default": null,
+          "encrypt": false
+        },
+        {
+          "key": "completedSectors",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 100000,
+          "default": null,
+          "encrypt": false
+        },
+        {
+          "key": "isFirstClick",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": true
+        },
+        {
+          "key": "gameOver",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
+        },
+        {
+          "key": "viewportOffsetX",
+          "type": "double",
+          "required": false,
+          "array": false,
+          "min": null,
+          "max": null,
+          "default": null
+        },
+        {
+          "key": "viewportOffsetY",
+          "type": "double",
+          "required": false,
+          "array": false,
+          "min": null,
+          "max": null,
+          "default": null
+        },
+        {
+          "key": "zoomLevel",
+          "type": "double",
+          "required": false,
+          "array": false,
+          "min": null,
+          "max": null,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "idx_createdBy",
+          "type": "key",
+          "status": "available",
+          "attributes": ["createdBy"],
+          "orders": ["ASC"]
+        }
+      ]
+    }
+  ]
 }
