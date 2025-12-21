@@ -72,7 +72,10 @@ export function GameControls({
   const isExporting = exportProgress !== null && exportProgress !== undefined
 
   return (
-    <div className="absolute top-4 left-4 right-4 flex flex-col gap-2 pointer-events-none z-10">
+    <div
+      className="absolute left-4 right-4 flex flex-col gap-2 pointer-events-none z-10"
+      style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
+    >
       {/* First row */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         {/* Left side - Game info */}
@@ -222,7 +225,10 @@ export function GameInstructions({
   onToggleCollapse: () => void
 }) {
   return (
-    <div className="absolute bottom-4 left-4 z-50 md:z-10 pointer-events-auto">
+    <div
+      className="absolute left-4 z-50 md:z-10 pointer-events-auto"
+      style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+    >
       {isCollapsed ? (
         <Button
           variant="outline"
@@ -331,7 +337,10 @@ export function SaveIndicator({
   const status = getStatusInfo()
 
   return (
-    <div className="absolute top-4 right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-10">
+    <div
+      className="absolute right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-10"
+      style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
+    >
       <button
         onClick={onForceSave}
         disabled={isSaving || (!isDirty && !error)}
@@ -366,7 +375,10 @@ export function InteractionModeToggle({
   onToggle: () => void
 }) {
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-auto">
+    <div
+      className="absolute left-1/2 -translate-x-1/2 z-10 pointer-events-auto"
+      style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+    >
       <div className="bg-stone-900/95 backdrop-blur-sm rounded-full shadow-lg px-3 py-2 flex items-center gap-2">
         <Flag
           size={16}

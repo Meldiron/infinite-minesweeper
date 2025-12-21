@@ -99,13 +99,29 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
   useEffect(() => {
     const originalStyle = document.body.style.overflow
     const originalTouchAction = document.body.style.touchAction
+    const originalHeight = document.body.style.height
+    const originalHtmlHeight = document.documentElement.style.height
+    const originalHtmlOverflow = document.documentElement.style.overflow
+    const originalPosition = document.body.style.position
+    const originalWidth = document.body.style.width
 
+    // Lock the body to prevent iOS Safari bounce/scroll
+    document.documentElement.style.height = '100%'
+    document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
     document.body.style.touchAction = 'none'
+    document.body.style.height = '100%'
+    document.body.style.position = 'fixed'
+    document.body.style.width = '100%'
 
     return () => {
+      document.documentElement.style.height = originalHtmlHeight
+      document.documentElement.style.overflow = originalHtmlOverflow
       document.body.style.overflow = originalStyle
       document.body.style.touchAction = originalTouchAction
+      document.body.style.height = originalHeight
+      document.body.style.position = originalPosition
+      document.body.style.width = originalWidth
     }
   }, [])
 
@@ -588,7 +604,12 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
   const sectorBorderClass = zoom <= 0.1 ? 'border' : 'border-2'
 
   return (
-    <div className="relative w-full h-screen bg-stone-800 overflow-hidden select-none touch-none">
+    <div
+      className="relative w-full bg-stone-800 overflow-hidden select-none touch-none"
+      style={{
+        height: '100dvh',
+      }}
+    >
       {/* Long-press flash effect */}
       {showFlash && (
         <div
@@ -649,7 +670,10 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
       />
 
       {/* Sector position indicator - always visible */}
-      <div className="absolute bottom-4 right-4 bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 pointer-events-none z-10">
+      <div
+        className="absolute right-4 bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 pointer-events-none z-10"
+        style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+      >
         <div className="flex items-center gap-2">
           <MapPin size={16} className="text-amber-500" />
           <span className="font-mono">
