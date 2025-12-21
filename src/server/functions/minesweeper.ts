@@ -17,6 +17,101 @@ const saveGameSchema = z.object({
   seed: z.number(),
 })
 
+// Schema for saving user preferences
+const savePreferencesSchema = z.object({
+  instructionsOpen: z.boolean(),
+  interactionMode: z.string(),
+  viewportOffsetX: z.number().nullable(),
+  viewportOffsetY: z.number().nullable(),
+  zoomLevel: z.number().nullable(),
+})
+
+// Get the current user's preferences
+export const getUserPreferencesFn = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const { currentUser } = await authMiddleware()
+    if (!currentUser) {
+      throw new Error('Unauthorized')
+    }
+
+    try {
+      const result = await db.userPreferences.list([
+        Query.equal('createdBy', [currentUser.$id]),
+        Query.limit(1),
+      ])
+
+      if (result.rows.length === 0) {
+        return { preferences: null }
+      }
+
+      const prefs = result.rows[0]
+      return {
+        preferences: {
+          id: prefs.$id,
+          instructionsOpen: prefs.instructionsOpen,
+          interactionMode: prefs.interactionMode,
+          viewportOffsetX: prefs.viewportOffsetX,
+          viewportOffsetY: prefs.viewportOffsetY,
+          zoomLevel: prefs.zoomLevel,
+        },
+      }
+    } catch (error) {
+      console.error('Error fetching user preferences:', error)
+      return { preferences: null }
+    }
+  },
+)
+
+// Save or update the current user's preferences
+export const saveUserPreferencesFn = createServerFn({ method: 'POST' })
+  .inputValidator(savePreferencesSchema)
+  .handler(async ({ data }) => {
+    const { currentUser } = await authMiddleware()
+    if (!currentUser) {
+      throw new Error('Unauthorized')
+    }
+
+    try {
+      // Check if user already has preferences
+      const existing = await db.userPreferences.list([
+        Query.equal('createdBy', [currentUser.$id]),
+        Query.limit(1),
+      ])
+
+      if (existing.rows.length > 0) {
+        // Update existing preferences
+        const updated = await db.userPreferences.update(existing.rows[0].$id, {
+          instructionsOpen: data.instructionsOpen,
+          interactionMode: data.interactionMode,
+          viewportOffsetX: data.viewportOffsetX,
+          viewportOffsetY: data.viewportOffsetY,
+          zoomLevel: data.zoomLevel,
+        })
+        return {
+          success: true,
+          preferencesId: updated.$id,
+        }
+      } else {
+        // Create new preferences
+        const created = await db.userPreferences.create({
+          createdBy: currentUser.$id,
+          instructionsOpen: data.instructionsOpen,
+          interactionMode: data.interactionMode,
+          viewportOffsetX: data.viewportOffsetX,
+          viewportOffsetY: data.viewportOffsetY,
+          zoomLevel: data.zoomLevel,
+        })
+        return {
+          success: true,
+          preferencesId: created.$id,
+        }
+      }
+    } catch (error) {
+      console.error('Error saving user preferences:', error)
+      throw new Error('Failed to save preferences')
+    }
+  })
+
 // Get the current user's game save
 export const getGameSaveFn = createServerFn({ method: 'GET' }).handler(
   async () => {

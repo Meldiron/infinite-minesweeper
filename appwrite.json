@@ -117,6 +117,82 @@
           "orders": ["ASC"]
         }
       ]
+    },
+    {
+      "$id": "user_preferences",
+      "$permissions": [
+        "create(\"any\")",
+        "read(\"any\")",
+        "update(\"any\")",
+        "delete(\"any\")"
+      ],
+      "databaseId": "imagine-project-db",
+      "name": "user_preferences",
+      "enabled": true,
+      "documentSecurity": true,
+      "attributes": [
+        {
+          "key": "createdBy",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 64,
+          "default": null,
+          "encrypt": false
+        },
+        {
+          "key": "instructionsOpen",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": true
+        },
+        {
+          "key": "interactionMode",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 16,
+          "default": "default",
+          "encrypt": false
+        },
+        {
+          "key": "viewportOffsetX",
+          "type": "double",
+          "required": false,
+          "array": false,
+          "min": null,
+          "max": null,
+          "default": null
+        },
+        {
+          "key": "viewportOffsetY",
+          "type": "double",
+          "required": false,
+          "array": false,
+          "min": null,
+          "max": null,
+          "default": null
+        },
+        {
+          "key": "zoomLevel",
+          "type": "double",
+          "required": false,
+          "array": false,
+          "min": null,
+          "max": null,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "idx_createdBy",
+          "type": "key",
+          "status": "available",
+          "attributes": ["createdBy"],
+          "orders": ["ASC"]
+        }
+      ]
     }
   ]
 }

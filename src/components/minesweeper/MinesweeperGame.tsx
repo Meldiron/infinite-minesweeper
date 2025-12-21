@@ -14,7 +14,11 @@ import {
 } from './useInfiniteGrid'
 import { Heart, MapPin } from 'lucide-react'
 import { useServerFn } from '@tanstack/react-start'
-import { saveGameFn, deleteGameSaveFn } from '@/server/functions/minesweeper'
+import {
+  saveGameFn,
+  deleteGameSaveFn,
+  saveUserPreferencesFn,
+} from '@/server/functions/minesweeper'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 const BASE_CELL_SIZE = 32
@@ -25,6 +29,7 @@ const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
 const EXPORT_MAX_SIZE = 1000 // Maximum export size in pixels (1000x1000)
 const EXPORT_CHUNK_SIZE = 50 // Process 50 rows at a time to prevent freezing
 const AUTO_SAVE_DELAY = 3000 // 3 seconds of inactivity before auto-save
+const PREFERENCES_SAVE_DELAY = 1000 // 1 second delay for preferences
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.ceil(ms / 1000)
@@ -33,19 +38,38 @@ function formatTime(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
+// Type for initial preferences from database
+type InitialPreferencesData = {
+  id: string
+  instructionsOpen: boolean
+  interactionMode: string
+  viewportOffsetX: number | null
+  viewportOffsetY: number | null
+  zoomLevel: number | null
+} | null
+
 type MinesweeperGameProps = {
   initialSave?: InitialSaveData
+  initialPreferences?: InitialPreferencesData
 }
 
-export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
+export function MinesweeperGame({
+  initialSave,
+  initialPreferences,
+}: MinesweeperGameProps) {
   const [seed] = useState(
     () => initialSave?.seed ?? Math.floor(Math.random() * 1000000),
   )
-  const [zoom, setZoom] = useState(() => initialSave?.zoomLevel ?? 1)
+
+  // Initialize zoom and offset from preferences first, then fall back to save, then defaults
+  const [zoom, setZoom] = useState(
+    () => initialPreferences?.zoomLevel ?? initialSave?.zoomLevel ?? 1,
+  )
   const [offset, setOffset] = useState(() => ({
-    x: initialSave?.viewportOffsetX ?? 0,
-    y: initialSave?.viewportOffsetY ?? 0,
+    x: initialPreferences?.viewportOffsetX ?? initialSave?.viewportOffsetX ?? 0,
+    y: initialPreferences?.viewportOffsetY ?? initialSave?.viewportOffsetY ?? 0,
   }))
+
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -57,17 +81,29 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
     y: 0,
   })
   const [exportProgress, setExportProgress] = useState<number | null>(null)
-  const [instructionsCollapsed, setInstructionsCollapsed] = useState(false)
+
+  // Initialize from preferences if available
+  const [instructionsCollapsed, setInstructionsCollapsed] = useState(() =>
+    initialPreferences ? !initialPreferences.instructionsOpen : false,
+  )
+  const [mobileMode, setMobileMode] = useState<MobileInteractionMode>(
+    () =>
+      (initialPreferences?.interactionMode as MobileInteractionMode) ||
+      'default',
+  )
+
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [mobileMode, setMobileMode] = useState<MobileInteractionMode>('default')
   const [showFlash, setShowFlash] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const preferencesSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const isInitialMountRef = useRef(true)
   const isMobile = useIsMobile()
 
   const saveGame = useServerFn(saveGameFn)
   const deleteGameSave = useServerFn(deleteGameSaveFn)
+  const savePreferences = useServerFn(saveUserPreferencesFn)
 
   const {
     getCellState,
@@ -187,6 +223,50 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
       }
     }
   }, [isDirty, performSave])
+
+  // Auto-save preferences when they change
+  useEffect(() => {
+    // Skip initial mount to avoid unnecessary save
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false
+      return
+    }
+
+    // Clear existing timer
+    if (preferencesSaveTimerRef.current) {
+      clearTimeout(preferencesSaveTimerRef.current)
+    }
+
+    // Set new timer for debounced save
+    preferencesSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await savePreferences({
+          data: {
+            instructionsOpen: !instructionsCollapsed,
+            interactionMode: mobileMode,
+            viewportOffsetX: offset.x,
+            viewportOffsetY: offset.y,
+            zoomLevel: zoom,
+          },
+        })
+      } catch (error) {
+        console.error('Failed to save preferences:', error)
+      }
+    }, PREFERENCES_SAVE_DELAY)
+
+    return () => {
+      if (preferencesSaveTimerRef.current) {
+        clearTimeout(preferencesSaveTimerRef.current)
+      }
+    }
+  }, [
+    instructionsCollapsed,
+    mobileMode,
+    offset.x,
+    offset.y,
+    zoom,
+    savePreferences,
+  ])
 
   // Track container size
   useEffect(() => {

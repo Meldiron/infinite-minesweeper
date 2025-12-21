@@ -12,3 +12,12 @@ export type MinesweeperSaves = Models.Row & {
   zoomLevel: number | null
   seed: number | null
 }
+
+export type UserPreferences = Models.Row & {
+  createdBy: string
+  instructionsOpen: boolean
+  interactionMode: string
+  viewportOffsetX: number | null
+  viewportOffsetY: number | null
+  zoomLevel: number | null
+}

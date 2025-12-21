@@ -1,17 +1,28 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { MinesweeperGame } from '@/components/minesweeper/MinesweeperGame'
-import { getGameSaveFn } from '@/server/functions/minesweeper'
+import {
+  getGameSaveFn,
+  getUserPreferencesFn,
+} from '@/server/functions/minesweeper'
 
 export const Route = createFileRoute('/_protected/play')({
   component: PlayPage,
   loader: async () => {
-    const { save } = await getGameSaveFn()
-    return { initialSave: save }
+    const [{ save }, { preferences }] = await Promise.all([
+      getGameSaveFn(),
+      getUserPreferencesFn(),
+    ])
+    return { initialSave: save, initialPreferences: preferences }
   },
 })
 
 function PlayPage() {
-  const { initialSave } = Route.useLoaderData()
+  const { initialSave, initialPreferences } = Route.useLoaderData()
 
-  return <MinesweeperGame initialSave={initialSave} />
+  return (
+    <MinesweeperGame
+      initialSave={initialSave}
+      initialPreferences={initialPreferences}
+    />
+  )
 }
