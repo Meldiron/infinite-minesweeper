@@ -6,6 +6,7 @@ import {
   SECTOR_SIZE,
   type SectorState,
 } from './useInfiniteGrid'
+import { Heart } from 'lucide-react'
 
 const BASE_CELL_SIZE = 32
 const MIN_ZOOM = 0.25
@@ -14,6 +15,13 @@ const ZOOM_STEP = 0.1
 const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
 
 export type Theme = 'light' | 'dark'
+
+function formatTime(ms: number): string {
+  const totalSeconds = Math.ceil(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
 
 export function MinesweeperGame() {
   const [seed] = useState(() => Math.floor(Math.random() * 1000000))
@@ -37,6 +45,9 @@ export function MinesweeperGame() {
     countAdjacentMines,
     isSectorComplete,
     getSectorState,
+    lives,
+    maxLives,
+    timeUntilNextLife,
   } = useInfiniteGrid(seed, 0.15)
 
   // Track container size
@@ -288,6 +299,8 @@ export function MinesweeperGame() {
     }
   }
 
+  const isWaiting = gameState === 'waiting'
+
   return (
     <div
       className={`relative w-full h-screen ${bgColor} overflow-hidden select-none transition-colors duration-300`}
@@ -303,9 +316,48 @@ export function MinesweeperGame() {
         flaggedCount={flaggedCount}
         theme={theme}
         onToggleTheme={handleToggleTheme}
+        lives={lives}
+        maxLives={maxLives}
+        timeUntilNextLife={timeUntilNextLife}
       />
 
       <GameInstructions theme={theme} />
+
+      {/* Waiting overlay when out of lives */}
+      {isWaiting && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-stone-900 rounded-2xl shadow-2xl p-8 max-w-md mx-4 text-center">
+            <div className="flex justify-center mb-4">
+              <Heart size={64} className="text-stone-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Out of Lives!
+            </h2>
+            <p className="text-stone-400 mb-6">
+              Wait for your health to regenerate to continue playing.
+            </p>
+            {timeUntilNextLife !== null && (
+              <div className="bg-stone-800 rounded-lg p-4">
+                <p className="text-stone-400 text-sm mb-1">Next life in</p>
+                <p className="text-3xl font-mono font-bold text-red-400">
+                  {formatTime(timeUntilNextLife)}
+                </p>
+              </div>
+            )}
+            <div className="mt-6 flex justify-center gap-1">
+              {Array.from({ length: maxLives }).map((_, i) => (
+                <Heart
+                  key={i}
+                  size={24}
+                  className={
+                    i < lives ? 'text-red-500 fill-red-500' : 'text-stone-600'
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div
         ref={containerRef}
@@ -346,7 +398,7 @@ export function MinesweeperGame() {
                   adjacentMines={adjacentMines}
                   onReveal={revealCell}
                   onFlag={toggleFlag}
-                  gameOver={gameState === 'lost'}
+                  gameOver={false}
                   theme={theme}
                   sectorComplete={sectorComplete}
                 />

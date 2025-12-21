@@ -7,6 +7,7 @@ import {
   Move,
   Sun,
   Moon,
+  Heart,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { GameState } from './useInfiniteGrid'
@@ -23,6 +24,16 @@ type GameControlsProps = {
   onResetView: () => void
   theme: Theme
   onToggleTheme: () => void
+  lives: number
+  maxLives: number
+  timeUntilNextLife: number | null
+}
+
+function formatTime(ms: number): string {
+  const totalSeconds = Math.ceil(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 export function GameControls({
@@ -30,12 +41,14 @@ export function GameControls({
   onZoomIn,
   onZoomOut,
   onReset,
-  gameState,
   revealedCount,
   flaggedCount,
   onResetView,
   theme,
   onToggleTheme,
+  lives,
+  maxLives,
+  timeUntilNextLife,
 }: GameControlsProps) {
   const isDark = theme === 'dark'
   const panelBg = isDark
@@ -51,6 +64,24 @@ export function GameControls({
         <div
           className={`${panelBg} backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 flex items-center gap-4 transition-colors duration-300`}
         >
+          {/* Lives display */}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: maxLives }).map((_, i) => (
+              <Heart
+                key={i}
+                size={18}
+                className={
+                  i < lives ? 'text-red-500 fill-red-500' : 'text-stone-500'
+                }
+              />
+            ))}
+            {timeUntilNextLife !== null && lives < maxLives && (
+              <span className="ml-2 font-mono text-xs text-stone-400">
+                +1 in {formatTime(timeUntilNextLife)}
+              </span>
+            )}
+          </div>
+          <div className={`w-px h-5 ${dividerColor}`} />
           <div className="flex items-center gap-2">
             <Grid3X3 size={18} className={iconColor} />
             <span className="font-mono text-sm font-medium">
@@ -65,12 +96,6 @@ export function GameControls({
             </span>
           </div>
         </div>
-
-        {gameState === 'lost' && (
-          <div className="bg-red-500 text-white rounded-lg shadow-lg px-4 py-2 font-bold animate-pulse">
-            💥 Game Over!
-          </div>
-        )}
       </div>
 
       {/* Right side - Controls */}

@@ -1,10 +1,14 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
 // Sector size for completion tracking
 export const SECTOR_SIZE = 8
 
 // Sector states for zoomed-out view
 export type SectorState = 'untouched' | 'in-progress' | 'finished'
+
+// Lives system constants
+const MAX_LIVES = 5
+const REGEN_INTERVAL_MS = 3 * 60 * 1000 // 3 minutes in milliseconds
 
 // Deterministic hash function for consistent mine placement
 function hashCoord(x: number, y: number, seed: number = 12345): number {
@@ -56,7 +60,7 @@ export type CellState = {
   exploded?: boolean
 }
 
-export type GameState = 'playing' | 'won' | 'lost'
+export type GameState = 'playing' | 'waiting'
 
 export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
   const [cellStates, setCellStates] = useState<Map<string, CellState>>(
@@ -65,6 +69,11 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
   const [gameState, setGameState] = useState<GameState>('playing')
   const [revealedCount, setRevealedCount] = useState(0)
   const [flaggedCount, setFlaggedCount] = useState(0)
+  const [lives, setLives] = useState(MAX_LIVES)
+  const [lastDamageTime, setLastDamageTime] = useState<number | null>(null)
+  const [timeUntilNextLife, setTimeUntilNextLife] = useState<number | null>(
+    null,
+  )
 
   // Cache for completed sectors
   const [completedSectors, setCompletedSectors] = useState<Set<string>>(
@@ -74,6 +83,40 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
   // Track removed mines (for first click protection)
   const removedMinesRef = useRef<Set<string>>(new Set())
   const isFirstClickRef = useRef<boolean>(true)
+
+  // Health regeneration effect
+  useEffect(() => {
+    if (lives >= MAX_LIVES) {
+      setTimeUntilNextLife(null)
+      return
+    }
+
+    if (lastDamageTime === null) {
+      setLastDamageTime(Date.now())
+    }
+
+    const interval = setInterval(() => {
+      const now = Date.now()
+      const timeSinceLastRegen = now - (lastDamageTime || now)
+      const timeRemaining =
+        REGEN_INTERVAL_MS - (timeSinceLastRegen % REGEN_INTERVAL_MS)
+
+      setTimeUntilNextLife(timeRemaining)
+
+      if (timeSinceLastRegen >= REGEN_INTERVAL_MS) {
+        setLives((prev) => {
+          const newLives = Math.min(MAX_LIVES, prev + 1)
+          if (newLives > 0 && gameState === 'waiting') {
+            setGameState('playing')
+          }
+          return newLives
+        })
+        setLastDamageTime(now)
+      }
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [lives, lastDamageTime, gameState])
 
   const getKey = useCallback((x: number, y: number) => `${x},${y}`, [])
 
@@ -323,13 +366,22 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
         const isMine = hasMine(cx, cy)
 
         if (isMine) {
+          // Mark the mine as exploded and revealed
           newStates.set(cellKey, {
             revealed: true,
             flagged: false,
             exploded: true,
           })
           setCellStates(newStates)
-          setGameState('lost')
+
+          // Lose a life
+          const newLives = lives - 1
+          setLives(newLives)
+          setLastDamageTime(Date.now())
+
+          if (newLives <= 0) {
+            setGameState('waiting')
+          }
           return
         }
 
@@ -369,6 +421,7 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
       countAdjacentMines,
       getCellState,
       updateCompletedSectors,
+      lives,
     ],
   )
 
@@ -398,6 +451,9 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
     setGameState('playing')
     setRevealedCount(0)
     setFlaggedCount(0)
+    setLives(MAX_LIVES)
+    setLastDamageTime(null)
+    setTimeUntilNextLife(null)
     setCompletedSectors(new Set())
     removedMinesRef.current = new Set()
     isFirstClickRef.current = true
@@ -415,5 +471,8 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
     countAdjacentMines,
     isSectorComplete,
     getSectorState,
+    lives,
+    maxLives: MAX_LIVES,
+    timeUntilNextLife,
   }
 }
