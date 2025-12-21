@@ -8,6 +8,8 @@ import {
   Heart,
   Download,
   Loader2,
+  ChevronDown,
+  HelpCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -215,20 +217,51 @@ export function GameControls({
   )
 }
 
-export function GameInstructions() {
+export function GameInstructions({
+  isCollapsed,
+  onToggleCollapse,
+}: {
+  isCollapsed: boolean
+  onToggleCollapse: () => void
+}) {
   return (
-    <div className="absolute bottom-4 left-4 bg-stone-900/95 text-stone-300 backdrop-blur-sm rounded-lg shadow-lg px-4 py-3 text-sm pointer-events-none z-10">
-      <div className="flex flex-col gap-1">
-        <span>
-          <strong>Left click</strong> to reveal
-        </span>
-        <span>
-          <strong>Right click</strong> to flag
-        </span>
-        <span>
-          <strong>Scroll</strong> to zoom • <strong>Drag</strong> to pan
-        </span>
-      </div>
+    <div className="absolute bottom-4 left-4 z-10 pointer-events-auto">
+      {isCollapsed ? (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={onToggleCollapse}
+          className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0"
+          title="Show instructions"
+        >
+          <HelpCircle size={18} />
+        </Button>
+      ) : (
+        <div className="bg-stone-900/95 text-stone-300 backdrop-blur-sm rounded-lg shadow-lg px-4 py-3 text-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <span>
+                <strong>Left click</strong> to reveal
+              </span>
+              <span>
+                <strong>Right click</strong> to flag
+              </span>
+              <span>
+                <strong>Scroll</strong> to zoom • <strong>Drag</strong> to pan
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapse}
+              className="h-6 w-6 -mr-2 -mt-1 hover:bg-stone-700 text-stone-400 hover:text-stone-100"
+              title="Hide instructions"
+            >
+              <ChevronDown size={16} />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

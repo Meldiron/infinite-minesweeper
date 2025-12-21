@@ -34,6 +34,7 @@ export function MinesweeperGame() {
     null,
   )
   const [exportProgress, setExportProgress] = useState<number | null>(null)
+  const [instructionsCollapsed, setInstructionsCollapsed] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -452,7 +453,10 @@ export function MinesweeperGame() {
         exportProgress={exportProgress}
       />
 
-      <GameInstructions />
+      <GameInstructions
+        isCollapsed={instructionsCollapsed}
+        onToggleCollapse={() => setInstructionsCollapsed((prev) => !prev)}
+      />
 
       {/* Sector position indicator */}
       {sectorUnderCursor && (
