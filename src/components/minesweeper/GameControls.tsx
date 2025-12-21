@@ -1,6 +1,16 @@
-import { ZoomIn, ZoomOut, RotateCcw, Flag, Grid3X3, Move } from 'lucide-react'
+import {
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Flag,
+  Grid3X3,
+  Move,
+  Sun,
+  Moon,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { GameState } from './useInfiniteGrid'
+import type { Theme } from './MinesweeperGame'
 
 type GameControlsProps = {
   zoom: number
@@ -11,6 +21,8 @@ type GameControlsProps = {
   revealedCount: number
   flaggedCount: number
   onResetView: () => void
+  theme: Theme
+  onToggleTheme: () => void
 }
 
 export function GameControls({
@@ -22,19 +34,30 @@ export function GameControls({
   revealedCount,
   flaggedCount,
   onResetView,
+  theme,
+  onToggleTheme,
 }: GameControlsProps) {
+  const isDark = theme === 'dark'
+  const panelBg = isDark
+    ? 'bg-gray-900/95 text-gray-100'
+    : 'bg-white/95 text-gray-800'
+  const iconColor = isDark ? 'text-gray-300' : 'text-gray-600'
+  const dividerColor = isDark ? 'bg-gray-600' : 'bg-gray-300'
+
   return (
     <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-4 pointer-events-none z-10">
       {/* Left side - Game info */}
       <div className="flex items-center gap-4 pointer-events-auto">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 flex items-center gap-4">
+        <div
+          className={`${panelBg} backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 flex items-center gap-4 transition-colors duration-300`}
+        >
           <div className="flex items-center gap-2">
-            <Grid3X3 size={18} className="text-gray-600" />
+            <Grid3X3 size={18} className={iconColor} />
             <span className="font-mono text-sm font-medium">
               {revealedCount}
             </span>
           </div>
-          <div className="w-px h-5 bg-gray-300" />
+          <div className={`w-px h-5 ${dividerColor}`} />
           <div className="flex items-center gap-2">
             <Flag size={18} className="text-red-500" />
             <span className="font-mono text-sm font-medium">
@@ -52,12 +75,14 @@ export function GameControls({
 
       {/* Right side - Controls */}
       <div className="flex items-center gap-2 pointer-events-auto">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1 flex items-center gap-1">
+        <div
+          className={`${panelBg} backdrop-blur-sm rounded-lg shadow-lg p-1 flex items-center gap-1 transition-colors duration-300`}
+        >
           <Button
             variant="ghost"
             size="icon"
             onClick={onZoomOut}
-            className="h-8 w-8"
+            className={`h-8 w-8 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
             title="Zoom out"
           >
             <ZoomOut size={18} />
@@ -69,7 +94,7 @@ export function GameControls({
             variant="ghost"
             size="icon"
             onClick={onZoomIn}
-            className="h-8 w-8"
+            className={`h-8 w-8 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
             title="Zoom in"
           >
             <ZoomIn size={18} />
@@ -79,8 +104,18 @@ export function GameControls({
         <Button
           variant="outline"
           size="icon"
+          onClick={onToggleTheme}
+          className={`h-10 w-10 ${panelBg} backdrop-blur-sm shadow-lg border-0 transition-colors duration-300`}
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+        </Button>
+
+        <Button
+          variant="outline"
+          size="icon"
           onClick={onResetView}
-          className="h-10 w-10 bg-white/95 backdrop-blur-sm shadow-lg"
+          className={`h-10 w-10 ${panelBg} backdrop-blur-sm shadow-lg border-0 transition-colors duration-300`}
           title="Reset view"
         >
           <Move size={18} />
@@ -90,7 +125,7 @@ export function GameControls({
           variant="outline"
           size="icon"
           onClick={onReset}
-          className="h-10 w-10 bg-white/95 backdrop-blur-sm shadow-lg"
+          className={`h-10 w-10 ${panelBg} backdrop-blur-sm shadow-lg border-0 transition-colors duration-300`}
           title="New game"
         >
           <RotateCcw size={18} />
@@ -100,9 +135,20 @@ export function GameControls({
   )
 }
 
-export function GameInstructions() {
+type GameInstructionsProps = {
+  theme: Theme
+}
+
+export function GameInstructions({ theme }: GameInstructionsProps) {
+  const isDark = theme === 'dark'
+  const panelBg = isDark
+    ? 'bg-gray-900/95 text-gray-300'
+    : 'bg-white/95 text-gray-600'
+
   return (
-    <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 pointer-events-none z-10">
+    <div
+      className={`absolute bottom-4 left-4 ${panelBg} backdrop-blur-sm rounded-lg shadow-lg px-4 py-3 text-sm pointer-events-none z-10 transition-colors duration-300`}
+    >
       <div className="flex flex-col gap-1">
         <span>
           <strong>Left click</strong> to reveal

@@ -8,6 +8,8 @@ const MIN_ZOOM = 0.25
 const MAX_ZOOM = 2
 const ZOOM_STEP = 0.1
 
+export type Theme = 'light' | 'dark'
+
 export function MinesweeperGame() {
   const [seed] = useState(() => Math.floor(Math.random() * 1000000))
   const [zoom, setZoom] = useState(1)
@@ -15,6 +17,7 @@ export function MinesweeperGame() {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+  const [theme, setTheme] = useState<Theme>('dark')
   const containerRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -184,6 +187,10 @@ export function MinesweeperGame() {
     touchStartRef.current = null
   }, [])
 
+  const handleToggleTheme = useCallback(() => {
+    setTheme((t) => (t === 'light' ? 'dark' : 'light'))
+  }, [])
+
   // Reset game with new seed
   const handleReset = useCallback(() => {
     resetGame()
@@ -193,8 +200,12 @@ export function MinesweeperGame() {
     window.location.reload()
   }, [resetGame])
 
+  const bgColor = theme === 'dark' ? 'bg-gray-800' : 'bg-gray-300'
+
   return (
-    <div className="relative w-full h-screen bg-gray-700 overflow-hidden select-none">
+    <div
+      className={`relative w-full h-screen ${bgColor} overflow-hidden select-none transition-colors duration-300`}
+    >
       <GameControls
         zoom={zoom}
         onZoomIn={handleZoomIn}
@@ -204,9 +215,11 @@ export function MinesweeperGame() {
         gameState={gameState}
         revealedCount={revealedCount}
         flaggedCount={flaggedCount}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
-      <GameInstructions />
+      <GameInstructions theme={theme} />
 
       <div
         ref={containerRef}
@@ -245,6 +258,7 @@ export function MinesweeperGame() {
                 onReveal={revealCell}
                 onFlag={toggleFlag}
                 gameOver={gameState === 'lost'}
+                theme={theme}
               />
             )
           })}
