@@ -123,7 +123,7 @@ export function GameControls({
                 </TooltipTrigger>
                 <TooltipContent
                   side="bottom"
-                  className="bg-stone-900 text-stone-100 border-stone-700 backdrop-blur-sm [&>div]:bg-stone-900 [&>div]:fill-stone-900"
+                  className="!bg-stone-900 text-stone-100 border-stone-700 [&>*:last-child]:!bg-stone-900 [&>*:last-child]:!fill-stone-900"
                 >
                   <p>Opened tiles</p>
                 </TooltipContent>
