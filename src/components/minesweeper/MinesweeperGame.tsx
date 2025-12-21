@@ -44,7 +44,6 @@ export function MinesweeperGame() {
     resetGame,
     gameState,
     revealedCount,
-    flaggedCount,
     hasMine,
     countAdjacentMines,
     isSectorComplete,
@@ -444,7 +443,6 @@ export function MinesweeperGame() {
         onResetView={handleResetView}
         gameState={gameState}
         revealedCount={revealedCount}
-        flaggedCount={flaggedCount}
         lives={lives}
         maxLives={maxLives}
         timeUntilNextLife={timeUntilNextLife}

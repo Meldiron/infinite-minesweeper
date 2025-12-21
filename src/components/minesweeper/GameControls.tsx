@@ -2,7 +2,6 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Flag,
   Grid3X3,
   Move,
   Heart,
@@ -33,7 +32,6 @@ type GameControlsProps = {
   onReset: () => void
   gameState: GameState
   revealedCount: number
-  flaggedCount: number
   onResetView: () => void
   lives: number
   maxLives: number
@@ -56,7 +54,6 @@ export function GameControls({
   onZoomOut,
   onReset,
   revealedCount,
-  flaggedCount,
   onResetView,
   lives,
   maxLives,
@@ -96,13 +93,6 @@ export function GameControls({
               <Grid3X3 size={18} className="text-stone-300" />
               <span className="font-mono text-sm font-medium">
                 {revealedCount}
-              </span>
-            </div>
-            <div className="w-px h-5 bg-stone-600" />
-            <div className="flex items-center gap-2">
-              <Flag size={18} className="text-red-500" />
-              <span className="font-mono text-sm font-medium">
-                {flaggedCount}
               </span>
             </div>
           </div>
