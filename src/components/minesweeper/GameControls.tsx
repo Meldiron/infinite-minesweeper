@@ -39,10 +39,10 @@ export function GameControls({
 }: GameControlsProps) {
   const isDark = theme === 'dark'
   const panelBg = isDark
-    ? 'bg-gray-900/95 text-gray-100'
-    : 'bg-white/95 text-gray-800'
-  const iconColor = isDark ? 'text-gray-300' : 'text-gray-600'
-  const dividerColor = isDark ? 'bg-gray-600' : 'bg-gray-300'
+    ? 'bg-stone-900/95 text-stone-100'
+    : 'bg-white/95 text-stone-800'
+  const iconColor = isDark ? 'text-stone-300' : 'text-stone-600'
+  const dividerColor = isDark ? 'bg-stone-600' : 'bg-stone-300'
 
   return (
     <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-4 pointer-events-none z-10">
@@ -82,7 +82,7 @@ export function GameControls({
             variant="ghost"
             size="icon"
             onClick={onZoomOut}
-            className={`h-8 w-8 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+            className={`h-8 w-8 ${isDark ? 'hover:bg-stone-700' : 'hover:bg-stone-100'}`}
             title="Zoom out"
           >
             <ZoomOut size={18} />
@@ -94,7 +94,7 @@ export function GameControls({
             variant="ghost"
             size="icon"
             onClick={onZoomIn}
-            className={`h-8 w-8 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+            className={`h-8 w-8 ${isDark ? 'hover:bg-stone-700' : 'hover:bg-stone-100'}`}
             title="Zoom in"
           >
             <ZoomIn size={18} />
@@ -142,8 +142,8 @@ type GameInstructionsProps = {
 export function GameInstructions({ theme }: GameInstructionsProps) {
   const isDark = theme === 'dark'
   const panelBg = isDark
-    ? 'bg-gray-900/95 text-gray-300'
-    : 'bg-white/95 text-gray-600'
+    ? 'bg-stone-900/95 text-stone-300'
+    : 'bg-white/95 text-stone-600'
 
   return (
     <div

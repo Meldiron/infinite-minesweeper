@@ -10,8 +10,8 @@ const NUMBER_COLORS: Record<number, string> = {
   4: 'text-purple-600',
   5: 'text-amber-700',
   6: 'text-cyan-500',
-  7: 'text-gray-800',
-  8: 'text-gray-600',
+  7: 'text-stone-800',
+  8: 'text-stone-600',
 }
 
 const NUMBER_COLORS_DARK: Record<number, string> = {
@@ -21,8 +21,8 @@ const NUMBER_COLORS_DARK: Record<number, string> = {
   4: 'text-purple-400',
   5: 'text-amber-400',
   6: 'text-cyan-400',
-  7: 'text-gray-300',
-  8: 'text-gray-400',
+  7: 'text-stone-300',
+  8: 'text-stone-400',
 }
 
 type CellProps = {
@@ -72,15 +72,15 @@ export const Cell = memo(function Cell({
 
   // Theme-based styles
   const revealedBg = isDark
-    ? 'bg-gray-700 border-gray-600'
-    : 'bg-gray-200 border-gray-300'
+    ? 'bg-stone-700 border-stone-600'
+    : 'bg-stone-200 border-stone-300'
   const mineBg = isDark
-    ? 'bg-gray-600 border-gray-500'
-    : 'bg-gray-300 border-gray-400'
+    ? 'bg-stone-600 border-stone-500'
+    : 'bg-stone-300 border-stone-400'
   const unrevealedBg = isDark
-    ? 'bg-gradient-to-br from-gray-500 to-gray-600 border-t-2 border-l-2 border-gray-400 border-r-2 border-b-2 border-r-gray-700 border-b-gray-700 hover:from-gray-450 hover:to-gray-550'
-    : 'bg-gradient-to-br from-gray-300 to-gray-400 border-t-2 border-l-2 border-white border-r-2 border-b-2 border-r-gray-500 border-b-gray-500 hover:from-gray-350 hover:to-gray-450'
-  const bombIconColor = isDark ? 'text-gray-300' : 'text-gray-800'
+    ? 'bg-gradient-to-br from-stone-500 to-stone-600 border-t-2 border-l-2 border-stone-400 border-r-2 border-b-2 border-r-stone-700 border-b-stone-700 hover:from-stone-450 hover:to-stone-550'
+    : 'bg-gradient-to-br from-stone-300 to-stone-400 border-t-2 border-l-2 border-white border-r-2 border-b-2 border-r-stone-500 border-b-stone-500 hover:from-stone-350 hover:to-stone-450'
+  const bombIconColor = isDark ? 'text-stone-300' : 'text-stone-800'
 
   // Revealed cell
   if (state.revealed) {
@@ -128,7 +128,7 @@ export const Cell = memo(function Cell({
       >
         {adjacentMines > 0 && (
           <span
-            className={`font-bold font-mono ${numberColors[adjacentMines] || (isDark ? 'text-gray-300' : 'text-gray-800')}`}
+            className={`font-bold font-mono ${numberColors[adjacentMines] || (isDark ? 'text-stone-300' : 'text-stone-800')}`}
             style={{ fontSize }}
           >
             {adjacentMines}
@@ -160,7 +160,7 @@ export const Cell = memo(function Cell({
   // Unrevealed cell
   return (
     <div
-      className={`absolute flex items-center justify-center cursor-pointer ${unrevealedBg} active:bg-gray-400 active:border transition-colors`}
+      className={`absolute flex items-center justify-center cursor-pointer ${unrevealedBg} active:bg-stone-400 active:border transition-colors`}
       style={{
         width: size - 1,
         height: size - 1,

@@ -200,7 +200,7 @@ export function MinesweeperGame() {
     window.location.reload()
   }, [resetGame])
 
-  const bgColor = theme === 'dark' ? 'bg-gray-800' : 'bg-gray-300'
+  const bgColor = theme === 'dark' ? 'bg-stone-800' : 'bg-stone-300'
 
   return (
     <div
