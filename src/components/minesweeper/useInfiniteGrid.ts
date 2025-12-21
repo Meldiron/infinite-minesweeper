@@ -92,12 +92,12 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
     }
 
     if (lastDamageTime === null) {
-      setLastDamageTime(Date.now())
+      return
     }
 
     const interval = setInterval(() => {
       const now = Date.now()
-      const timeSinceLastRegen = now - (lastDamageTime || now)
+      const timeSinceLastRegen = now - lastDamageTime
       const timeRemaining =
         REGEN_INTERVAL_MS - (timeSinceLastRegen % REGEN_INTERVAL_MS)
 
@@ -109,9 +109,16 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
           if (newLives > 0 && gameState === 'waiting') {
             setGameState('playing')
           }
+          // If we're now at max lives, clear the damage time
+          // Otherwise, reset it to now to start the next 3-min cycle
+          if (newLives >= MAX_LIVES) {
+            setLastDamageTime(null)
+            setTimeUntilNextLife(null)
+          } else {
+            setLastDamageTime(now)
+          }
           return newLives
         })
-        setLastDamageTime(now)
       }
     }, 1000)
 
@@ -377,7 +384,11 @@ export function useInfiniteGrid(seed: number = 12345, density: number = 0.12) {
           // Lose a life
           const newLives = lives - 1
           setLives(newLives)
-          setLastDamageTime(Date.now())
+
+          // Only set lastDamageTime if this is the first damage (starts the regen timer)
+          if (lastDamageTime === null) {
+            setLastDamageTime(Date.now())
+          }
 
           if (newLives <= 0) {
             setGameState('waiting')
