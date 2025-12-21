@@ -6,7 +6,7 @@ import {
   SECTOR_SIZE,
   type SectorState,
 } from './useInfiniteGrid'
-import { Heart } from 'lucide-react'
+import { Heart, MapPin } from 'lucide-react'
 
 const BASE_CELL_SIZE = 32
 const MIN_ZOOM = 0.05
@@ -28,6 +28,9 @@ export function MinesweeperGame() {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(
+    null,
+  )
   const containerRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -66,6 +69,21 @@ export function MinesweeperGame() {
   const cellSize = BASE_CELL_SIZE * zoom
   const sectorPixelSize = SECTOR_SIZE * cellSize
   const isZoomedOut = zoom <= SECTOR_VIEW_THRESHOLD
+
+  // Calculate sector position under cursor
+  const sectorUnderCursor = useMemo(() => {
+    if (!mousePos) return null
+
+    // Convert screen position to world position
+    const worldX = (mousePos.x - offset.x) / cellSize
+    const worldY = (mousePos.y - offset.y) / cellSize
+
+    // Calculate sector coordinates
+    const sectorX = Math.floor(worldX / SECTOR_SIZE)
+    const sectorY = Math.floor(worldY / SECTOR_SIZE)
+
+    return { x: sectorX, y: sectorY }
+  }, [mousePos, offset, cellSize])
 
   // Calculate visible cells (only when not in sector view)
   const visibleCells = useMemo(() => {
@@ -220,6 +238,15 @@ export function MinesweeperGame() {
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
+      // Update mouse position for sector tracking
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (rect) {
+        setMousePos({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        })
+      }
+
       if (isDragging) {
         setOffset({
           x: e.clientX - dragStart.x,
@@ -232,6 +259,11 @@ export function MinesweeperGame() {
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    setIsDragging(false)
+    setMousePos(null)
   }, [])
 
   // Touch handlers for mobile
@@ -327,6 +359,18 @@ export function MinesweeperGame() {
 
       <GameInstructions />
 
+      {/* Sector position indicator */}
+      {sectorUnderCursor && (
+        <div className="absolute bottom-4 right-4 bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 pointer-events-none z-10">
+          <div className="flex items-center gap-2">
+            <MapPin size={16} className="text-amber-500" />
+            <span className="font-mono text-sm">
+              Sector ({sectorUnderCursor.x}, {sectorUnderCursor.y})
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Waiting overlay when out of lives */}
       {isWaiting && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -369,7 +413,7 @@ export function MinesweeperGame() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
