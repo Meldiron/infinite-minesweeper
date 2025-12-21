@@ -173,12 +173,13 @@ export function useInfiniteGrid(
     return new Set()
   })
 
-  // Track removed mines (for first click protection)
-  const removedMinesRef = useRef<Set<string>>(
-    initialSave?.removedMines
-      ? deserializeSet(initialSave.removedMines)
-      : new Set(),
-  )
+  // Track removed mines (for first click protection) - using state for proper serialization
+  const [removedMines, setRemovedMines] = useState<Set<string>>(() => {
+    if (initialSave?.removedMines) {
+      return deserializeSet(initialSave.removedMines)
+    }
+    return new Set()
+  })
   const isFirstClickRef = useRef<boolean>(initialSave?.isFirstClick ?? true)
 
   // Track if state has changed since last save
@@ -237,10 +238,10 @@ export function useInfiniteGrid(
   const hasMine = useCallback(
     (x: number, y: number): boolean => {
       const key = getKey(x, y)
-      if (removedMinesRef.current.has(key)) return false
+      if (removedMines.has(key)) return false
       return hasMineBase(x, y, seed, density)
     },
-    [getKey, seed, density],
+    [getKey, seed, density, removedMines],
   )
 
   // Count adjacent mines considering removed mines
@@ -411,9 +412,11 @@ export function useInfiniteGrid(
       if (isFirstClickRef.current) {
         isFirstClickRef.current = false
 
+        const minesToRemove = new Set<string>()
+
         // Remove mine from clicked cell
         if (hasMineBase(x, y, seed, density)) {
-          removedMinesRef.current.add(key)
+          minesToRemove.add(key)
         }
 
         // Remove mines from immediate neighbors (8 cells)
@@ -421,7 +424,7 @@ export function useInfiniteGrid(
         for (const [nx, ny] of immediateNeighbors) {
           const neighborKey = getKey(nx, ny)
           if (hasMineBase(nx, ny, seed, density)) {
-            removedMinesRef.current.add(neighborKey)
+            minesToRemove.add(neighborKey)
           }
         }
 
@@ -454,9 +457,95 @@ export function useInfiniteGrid(
         for (const [nx, ny] of secondRing) {
           const neighborKey = getKey(nx, ny)
           if (hasMineBase(nx, ny, seed, density)) {
-            removedMinesRef.current.add(neighborKey)
+            minesToRemove.add(neighborKey)
           }
         }
+
+        // Update removed mines state
+        if (minesToRemove.size > 0) {
+          setRemovedMines((prev) => {
+            const newSet = new Set(prev)
+            minesToRemove.forEach((k) => newSet.add(k))
+            return newSet
+          })
+        }
+
+        // Create a local hasMine function that includes the newly removed mines
+        // This is needed because state updates are async and hasMine won't see the new removedMines yet
+        const hasMineLocal = (cx: number, cy: number): boolean => {
+          const cellKey = getKey(cx, cy)
+          if (removedMines.has(cellKey) || minesToRemove.has(cellKey))
+            return false
+          return hasMineBase(cx, cy, seed, density)
+        }
+
+        // Count adjacent mines with local removed mines
+        const countAdjacentMinesLocal = (cx: number, cy: number): number => {
+          return getNeighbors(cx, cy).filter(([nx, ny]) => hasMineLocal(nx, ny))
+            .length
+        }
+
+        // Perform reveal with local mine checking
+        const newStates = new Map(cellStates)
+        const toReveal: [number, number][] = [[x, y]]
+        const revealedCells: [number, number][] = []
+        let revealed = 0
+
+        while (toReveal.length > 0) {
+          const [cx, cy] = toReveal.pop()!
+          const cellKey = getKey(cx, cy)
+          const cellState = newStates.get(cellKey)
+
+          if (cellState?.revealed || cellState?.flagged) continue
+
+          const isMine = hasMineLocal(cx, cy)
+
+          if (isMine) {
+            // This shouldn't happen on first click due to mine removal, but handle it anyway
+            newStates.set(cellKey, {
+              revealed: true,
+              flagged: false,
+              exploded: true,
+            })
+            setCellStates(newStates)
+            setIsDirty(true)
+            updateCompletedSectors(newStates, [[cx, cy]])
+            const newLives = lives - 1
+            setLives(newLives)
+            if (lastDamageTime === null) {
+              setLastDamageTime(Date.now())
+            }
+            if (newLives <= 0) {
+              setGameState('waiting')
+            }
+            return
+          }
+
+          newStates.set(cellKey, { revealed: true, flagged: false })
+          revealedCells.push([cx, cy])
+          revealed++
+
+          const adjacentMines = countAdjacentMinesLocal(cx, cy)
+
+          if (adjacentMines === 0) {
+            for (const [nx, ny] of getNeighbors(cx, cy)) {
+              const neighborKey = getKey(nx, ny)
+              const neighborState = newStates.get(neighborKey)
+              if (!neighborState?.revealed && !neighborState?.flagged) {
+                toReveal.push([nx, ny])
+              }
+            }
+          }
+        }
+
+        setCellStates(newStates)
+        setRevealedCount((prev) => prev + revealed)
+        setIsDirty(true)
+
+        if (revealedCells.length > 0) {
+          updateCompletedSectors(newStates, revealedCells)
+        }
+        return
       }
 
       const newStates = new Map(cellStates)
@@ -574,7 +663,7 @@ export function useInfiniteGrid(
     setLastDamageTime(null)
     setTimeUntilNextLife(null)
     setCompletedSectors(new Set())
-    removedMinesRef.current = new Set()
+    setRemovedMines(new Set())
     isFirstClickRef.current = true
     setIsDirty(true)
     setLastSaveTime(null)
@@ -584,16 +673,13 @@ export function useInfiniteGrid(
   const getSerializableState = useCallback((): SerializableGameState => {
     return {
       cellStates: serializeCellStates(cellStates),
-      removedMines:
-        removedMinesRef.current.size > 0
-          ? serializeSet(removedMinesRef.current)
-          : null,
+      removedMines: removedMines.size > 0 ? serializeSet(removedMines) : null,
       completedSectors:
         completedSectors.size > 0 ? serializeSet(completedSectors) : null,
       isFirstClick: isFirstClickRef.current,
       gameOver: gameState === 'waiting',
     }
-  }, [cellStates, completedSectors, gameState])
+  }, [cellStates, completedSectors, gameState, removedMines])
 
   // Mark as saved
   const markAsSaved = useCallback(() => {
