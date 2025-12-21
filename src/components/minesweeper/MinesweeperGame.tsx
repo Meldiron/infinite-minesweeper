@@ -80,6 +80,36 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
     markAsSaved,
   } = useInfiniteGrid(seed, 0.15, initialSave)
 
+  // Prevent body scroll on mobile when game is mounted
+  useEffect(() => {
+    const originalStyle = document.body.style.overflow
+    const originalTouchAction = document.body.style.touchAction
+
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+
+    return () => {
+      document.body.style.overflow = originalStyle
+      document.body.style.touchAction = originalTouchAction
+    }
+  }, [])
+
+  // Add native touch event listeners with passive: false to prevent scroll
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const preventScroll = (e: TouchEvent) => {
+      e.preventDefault()
+    }
+
+    container.addEventListener('touchmove', preventScroll, { passive: false })
+
+    return () => {
+      container.removeEventListener('touchmove', preventScroll)
+    }
+  }, [])
+
   // Perform save operation
   const performSave = useCallback(async () => {
     if (isSaving) return
@@ -522,7 +552,7 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
   const sectorBorderClass = zoom <= 0.1 ? 'border' : 'border-2'
 
   return (
-    <div className="relative w-full h-screen bg-stone-800 overflow-hidden select-none">
+    <div className="relative w-full h-screen bg-stone-800 overflow-hidden select-none touch-none">
       <GameControls
         zoom={zoom}
         onZoomIn={handleZoomIn}
