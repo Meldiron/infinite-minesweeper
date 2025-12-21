@@ -22,6 +22,7 @@ import {
 import {
   getLeaderboardFn,
   getLeaderboardCountFn,
+  syncLeaderboardStatsFn,
 } from '@/server/functions/leaderboard'
 
 type LeaderboardEntry = {
@@ -40,12 +41,16 @@ export function LeaderboardPage() {
 
   const getLeaderboard = useServerFn(getLeaderboardFn)
   const getLeaderboardCount = useServerFn(getLeaderboardCountFn)
+  const syncLeaderboardStats = useServerFn(syncLeaderboardStatsFn)
 
   // Initial load
   useEffect(() => {
     const loadInitial = async () => {
       setIsLoading(true)
       try {
+        // First sync stats to ensure all onboarded users have public-readable stats
+        await syncLeaderboardStats()
+
         const [leaderboardResult, countResult] = await Promise.all([
           getLeaderboard({ data: { cursor: null } }),
           getLeaderboardCount(),
@@ -63,7 +68,7 @@ export function LeaderboardPage() {
     }
 
     loadInitial()
-  }, [getLeaderboard, getLeaderboardCount])
+  }, [getLeaderboard, getLeaderboardCount, syncLeaderboardStats])
 
   // Load more
   const loadMore = useCallback(async () => {

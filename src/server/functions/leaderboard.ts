@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { Query } from 'node-appwrite'
+import { Query, Permission, Role } from 'node-appwrite'
 import { db } from '@/server/lib/db'
 
 const LEADERBOARD_PAGE_SIZE = 20
@@ -75,3 +75,75 @@ export const getLeaderboardCountFn = createServerFn({ method: 'GET' }).handler(
     }
   },
 )
+
+// Sync missing userStats from userOnboarding records
+// This ensures all onboarded users appear on the leaderboard
+export const syncLeaderboardStatsFn = createServerFn({
+  method: 'POST',
+}).handler(async () => {
+  try {
+    // Get all onboarded users
+    const onboardedUsers = await db.userOnboarding.list([
+      Query.equal('onboardingCompleted', [true]),
+      Query.limit(1000), // Get up to 1000 users
+    ])
+
+    let created = 0
+    let updated = 0
+
+    for (const onboarding of onboardedUsers.rows) {
+      // Check if user has stats
+      const existingStats = await db.userStats.list([
+        Query.equal('createdBy', [onboarding.createdBy]),
+        Query.limit(1),
+      ])
+
+      if (existingStats.rows.length === 0) {
+        // Create stats with public read permission
+        await db.userStats.create(
+          {
+            createdBy: onboarding.createdBy,
+            nickname: onboarding.nickname,
+            tilesOpened: 0,
+          },
+          {
+            permissions: [
+              Permission.read(Role.any()),
+              Permission.write(Role.user(onboarding.createdBy)),
+              Permission.update(Role.user(onboarding.createdBy)),
+              Permission.delete(Role.user(onboarding.createdBy)),
+            ],
+          },
+        )
+        created++
+      } else {
+        // Update existing stats to have public read permission
+        await db.userStats.update(
+          existingStats.rows[0].$id,
+          {
+            nickname: onboarding.nickname, // Sync nickname
+          },
+          {
+            permissions: [
+              Permission.read(Role.any()),
+              Permission.write(Role.user(onboarding.createdBy)),
+              Permission.update(Role.user(onboarding.createdBy)),
+              Permission.delete(Role.user(onboarding.createdBy)),
+            ],
+          },
+        )
+        updated++
+      }
+    }
+
+    return {
+      success: true,
+      created,
+      updated,
+      total: onboardedUsers.rows.length,
+    }
+  } catch (error) {
+    console.error('Failed to sync leaderboard stats:', error)
+    throw new Error('Failed to sync leaderboard stats')
+  }
+})

@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { authMiddleware } from './auth'
 import { db } from '@/server/lib/db'
-import { Query } from 'node-appwrite'
+import { Query, Permission, Role } from 'node-appwrite'
 
 // Get the current user's onboarding status
 export const getOnboardingStatusFn = createServerFn({ method: 'GET' }).handler(
@@ -128,12 +128,22 @@ export const completeOnboardingFn = createServerFn({ method: 'POST' })
             nickname,
           })
         } else {
-          // Create userStats if it doesn't exist
-          await db.userStats.create({
-            createdBy: currentUser.$id,
-            nickname,
-            tilesOpened: 0,
-          })
+          // Create userStats if it doesn't exist - with public read for leaderboard
+          await db.userStats.create(
+            {
+              createdBy: currentUser.$id,
+              nickname,
+              tilesOpened: 0,
+            },
+            {
+              permissions: [
+                Permission.read(Role.any()),
+                Permission.write(Role.user(currentUser.$id)),
+                Permission.update(Role.user(currentUser.$id)),
+                Permission.delete(Role.user(currentUser.$id)),
+              ],
+            },
+          )
         }
 
         return {
@@ -155,11 +165,22 @@ export const completeOnboardingFn = createServerFn({ method: 'POST' })
         ])
 
         if (existingStats.rows.length === 0) {
-          await db.userStats.create({
-            createdBy: currentUser.$id,
-            nickname,
-            tilesOpened: 0,
-          })
+          // Create with public read permission for leaderboard visibility
+          await db.userStats.create(
+            {
+              createdBy: currentUser.$id,
+              nickname,
+              tilesOpened: 0,
+            },
+            {
+              permissions: [
+                Permission.read(Role.any()),
+                Permission.write(Role.user(currentUser.$id)),
+                Permission.update(Role.user(currentUser.$id)),
+                Permission.delete(Role.user(currentUser.$id)),
+              ],
+            },
+          )
         } else {
           // Update nickname if stats already exist
           await db.userStats.update(existingStats.rows[0].$id, {
