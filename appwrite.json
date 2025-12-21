@@ -97,6 +97,15 @@
           "min": null,
           "max": null,
           "default": null
+        },
+        {
+          "key": "seed",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "min": -9223372036854776000,
+          "max": 9223372036854776000,
+          "default": null
         }
       ],
       "indexes": [

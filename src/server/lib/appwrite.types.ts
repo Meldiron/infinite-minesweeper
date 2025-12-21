@@ -10,4 +10,5 @@ export type MinesweeperSaves = Models.Row & {
   viewportOffsetX: number | null
   viewportOffsetY: number | null
   zoomLevel: number | null
+  seed: number | null
 }

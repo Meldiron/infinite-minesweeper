@@ -14,6 +14,7 @@ const saveGameSchema = z.object({
   viewportOffsetX: z.number().nullable(),
   viewportOffsetY: z.number().nullable(),
   zoomLevel: z.number().nullable(),
+  seed: z.number(),
 })
 
 // Get the current user's game save
@@ -46,6 +47,7 @@ export const getGameSaveFn = createServerFn({ method: 'GET' }).handler(
           viewportOffsetX: save.viewportOffsetX,
           viewportOffsetY: save.viewportOffsetY,
           zoomLevel: save.zoomLevel,
+          seed: save.seed,
           updatedAt: save.$updatedAt,
         },
       }
@@ -83,6 +85,7 @@ export const saveGameFn = createServerFn({ method: 'POST' })
           viewportOffsetX: data.viewportOffsetX,
           viewportOffsetY: data.viewportOffsetY,
           zoomLevel: data.zoomLevel,
+          seed: data.seed,
         })
         return {
           success: true,
@@ -101,6 +104,7 @@ export const saveGameFn = createServerFn({ method: 'POST' })
           viewportOffsetX: data.viewportOffsetX,
           viewportOffsetY: data.viewportOffsetY,
           zoomLevel: data.zoomLevel,
+          seed: data.seed,
         })
         return {
           success: true,
