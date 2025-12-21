@@ -44,6 +44,10 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(
     null,
   )
+  const [currentSector, setCurrentSector] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  })
   const [exportProgress, setExportProgress] = useState<number | null>(null)
   const [instructionsCollapsed, setInstructionsCollapsed] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -155,6 +159,13 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
 
     return { x: sectorX, y: sectorY }
   }, [mousePos, offset, cellSize])
+
+  // Update current sector when cursor moves over game area
+  useEffect(() => {
+    if (sectorUnderCursor) {
+      setCurrentSector(sectorUnderCursor)
+    }
+  }, [sectorUnderCursor])
 
   // Export board as PNG (1 pixel per sector, max 1000x1000, centered at 0,0)
   // Uses chunked processing to prevent browser freezing
@@ -540,17 +551,15 @@ export function MinesweeperGame({ initialSave }: MinesweeperGameProps) {
         onForceSave={performSave}
       />
 
-      {/* Sector position indicator */}
-      {sectorUnderCursor && (
-        <div className="absolute bottom-4 right-4 bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 pointer-events-none z-10">
-          <div className="flex items-center gap-2">
-            <MapPin size={16} className="text-amber-500" />
-            <span className="font-mono">
-              {sectorUnderCursor.x}, {sectorUnderCursor.y}
-            </span>
-          </div>
+      {/* Sector position indicator - always visible */}
+      <div className="absolute bottom-4 right-4 bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 pointer-events-none z-10">
+        <div className="flex items-center gap-2">
+          <MapPin size={16} className="text-amber-500" />
+          <span className="font-mono">
+            {currentSector.x}, {currentSector.y}
+          </span>
         </div>
-      )}
+      </div>
 
       {/* Waiting overlay when out of lives */}
       {isWaiting && (
