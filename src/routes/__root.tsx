@@ -62,11 +62,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="bg-stone-900">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){document.documentElement.style.backgroundColor='#1c1917';document.body&&(document.body.style.backgroundColor='#1c1917')})()`,
+          }}
+        />
       </head>
-      <body>
+      <body className="bg-stone-900">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
