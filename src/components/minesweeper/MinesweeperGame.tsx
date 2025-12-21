@@ -574,7 +574,7 @@ export function MinesweeperGame() {
             sectorLines.vertical.map((x) => (
               <div
                 key={`v-${x}`}
-                className="absolute bg-amber-500/60 pointer-events-none"
+                className="absolute bg-stone-400/50 pointer-events-none"
                 style={{
                   left: x,
                   top: -10000,
@@ -589,7 +589,7 @@ export function MinesweeperGame() {
             sectorLines.horizontal.map((y) => (
               <div
                 key={`h-${y}`}
-                className="absolute bg-amber-500/60 pointer-events-none"
+                className="absolute bg-stone-400/50 pointer-events-none"
                 style={{
                   left: -10000,
                   top: y,
