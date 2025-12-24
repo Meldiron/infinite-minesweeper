@@ -31,7 +31,7 @@ const NUMBER_COLORS_COMPLETE: Record<number, string> = {
 // Sector colors
 const SECTOR_COLORS: Record<SectorState, { bg: string; border: string }> = {
   untouched: { bg: '#44403c', border: '#57534e' }, // stone-700, stone-600
-  'in-progress': { bg: '#b45309', border: '#d97706' }, // amber-700, amber-600
+  'in-progress': { bg: '#431407', border: '#f97316' }, // orange-950, orange-500 (dark bg, vibrant border)
   finished: { bg: '#14532d', border: '#22c55e' }, // green-900, green-500 (dark bg, vibrant border)
 }
 
