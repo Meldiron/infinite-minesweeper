@@ -394,7 +394,7 @@ export function MinesweeperGame({
     setExportProgress(0)
 
     const mapSize = EXPORT_SECTOR_SIZE * EXPORT_PIXEL_SCALE // 1000x1000 pixels for map
-    const legendHeight = 120 // Height for legend panel
+    const legendHeight = 140 // Height for legend panel
     const canvasWidth = mapSize
     const canvasHeight = mapSize + legendHeight
 
@@ -489,9 +489,22 @@ export function MinesweeperGame({
     ctx.textAlign = 'left'
     ctx.fillText('Infinite Minesweeper', 20, legendY + 5)
 
+    // Current date and time
+    const now = new Date()
+    const dateTimeStr = now.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    ctx.fillStyle = '#78716c' // stone-500
+    ctx.font = '12px system-ui, -apple-system, sans-serif'
+    ctx.fillText(dateTimeStr, 20, legendY + 25)
+
     // Color legend
     const legendStartX = 20
-    const legendItemY = legendY + 40
+    const legendItemY = legendY + 55
     const boxSize = 16
     const legendItems = [
       { color: '#44403c', label: 'Untouched' },
@@ -551,7 +564,7 @@ export function MinesweeperGame({
     ctx.fillText(
       `Map: sectors (${minSectorX}, ${minSectorY}) to (${minSectorX + EXPORT_SECTOR_SIZE - 1}, ${minSectorY + EXPORT_SECTOR_SIZE - 1})`,
       statsX,
-      legendY + 75,
+      legendY + 70,
     )
 
     setExportProgress(100)
