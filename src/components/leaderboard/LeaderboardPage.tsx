@@ -25,6 +25,7 @@ import {
   getLeaderboardCountFn,
   syncLeaderboardStatsFn,
 } from '@/server/functions/leaderboard'
+import { useAuth } from '@/hooks/use-auth'
 
 type LeaderboardEntry = {
   id: string
@@ -39,6 +40,8 @@ export function LeaderboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [totalPlayers, setTotalPlayers] = useState(0)
+
+  const { currentUser } = useAuth()
 
   const getLeaderboard = useServerFn(getLeaderboardFn)
   const getLeaderboardCount = useServerFn(getLeaderboardCountFn)
@@ -264,26 +267,28 @@ export function LeaderboardPage() {
           </CardContent>
         </Card>
 
-        {/* Ready to Begin CTA */}
-        <div className="mt-6">
-          <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-2xl p-10 border border-amber-800/30 text-center">
-            <Zap size={40} className="text-amber-500 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold text-stone-100 mb-4">
-              Ready to Begin?
-            </h2>
-            <p className="text-stone-400 mb-8">
-              Join thousands of players exploring the infinite grid.
-            </p>
-            <Link to="/sign-up">
-              <Button
-                size="lg"
-                className="bg-amber-600 hover:bg-amber-700 text-white px-10"
-              >
-                Create Free Account
-              </Button>
-            </Link>
+        {/* Ready to Begin CTA - Only show for logged out users */}
+        {!currentUser && (
+          <div className="mt-6">
+            <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-2xl p-10 border border-amber-800/30 text-center">
+              <Zap size={40} className="text-amber-500 mx-auto mb-4" />
+              <h2 className="text-3xl font-bold text-stone-100 mb-4">
+                Ready to Begin?
+              </h2>
+              <p className="text-stone-400 mb-8">
+                Join thousands of players exploring the infinite grid.
+              </p>
+              <Link to="/sign-up">
+                <Button
+                  size="lg"
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-10"
+                >
+                  Create Free Account
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
