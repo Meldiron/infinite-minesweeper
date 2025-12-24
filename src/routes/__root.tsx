@@ -45,13 +45,18 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
           'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover',
       },
       {
-        title: 'Imagine App',
+        title: 'Infinite Minesweeper',
       },
     ],
     links: [
       {
         rel: 'stylesheet',
         href: appCss,
+      },
+      {
+        rel: 'icon',
+        href: '/favicon.svg',
+        type: 'image/svg+xml',
       },
     ],
     scripts: [...scripts],
