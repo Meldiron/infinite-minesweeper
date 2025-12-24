@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback, memo } from 'react'
 import type { CellState, SectorState } from './useInfiniteGrid'
 import { SECTOR_SIZE } from './useInfiniteGrid'
 import type { MobileInteractionMode } from './Cell'
+import type { RefObject } from 'react'
 
 // Colors for numbers (matching Cell.tsx)
 const NUMBER_COLORS: Record<number, string> = {
@@ -101,6 +102,7 @@ type CanvasRendererProps = {
   gameState: 'playing' | 'waiting'
   shouldAllowClick: () => boolean
   onLongPressAction: () => void
+  isPinchingRef: RefObject<boolean>
 }
 
 export const CanvasRenderer = memo(function CanvasRenderer({
@@ -123,12 +125,14 @@ export const CanvasRenderer = memo(function CanvasRenderer({
   gameState,
   shouldAllowClick,
   onLongPressAction,
+  isPinchingRef,
 }: CanvasRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPressRef = useRef(false)
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
   const hasMovedRef = useRef(false)
+  const wasPinchingRef = useRef(false)
 
   const sectorPixelSize = SECTOR_SIZE * cellSize
 
@@ -467,6 +471,16 @@ export const CanvasRenderer = memo(function CanvasRenderer({
       if (!isMobile || gameState !== 'playing') return
       if (isZoomedOut) return
 
+      // If pinching or multiple touches, don't start long press
+      if (isPinchingRef.current || e.touches.length > 1) {
+        wasPinchingRef.current = true
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current)
+          longPressTimerRef.current = null
+        }
+        return
+      }
+
       const touch = e.touches[0]
       const rect = canvasRef.current?.getBoundingClientRect()
       if (!rect) return
@@ -474,12 +488,18 @@ export const CanvasRenderer = memo(function CanvasRenderer({
       touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
       isLongPressRef.current = false
       hasMovedRef.current = false
+      wasPinchingRef.current = false
 
       const screenX = touch.clientX - rect.left
       const screenY = touch.clientY - rect.top
       const { cellX, cellY } = screenToCell(screenX, screenY)
 
       longPressTimerRef.current = setTimeout(() => {
+        // Double-check we're not pinching when timer fires
+        if (isPinchingRef.current || wasPinchingRef.current) {
+          return
+        }
+
         isLongPressRef.current = true
         onLongPressAction()
 
@@ -499,6 +519,7 @@ export const CanvasRenderer = memo(function CanvasRenderer({
       isMobile,
       gameState,
       isZoomedOut,
+      isPinchingRef,
       screenToCell,
       getCellState,
       mobileMode,
@@ -509,6 +530,16 @@ export const CanvasRenderer = memo(function CanvasRenderer({
   )
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    // Cancel long press if multiple fingers detected (pinch starting)
+    if (e.touches.length > 1) {
+      wasPinchingRef.current = true
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current)
+        longPressTimerRef.current = null
+      }
+      return
+    }
+
     if (!touchStartPosRef.current) return
 
     const touch = e.touches[0]
@@ -536,12 +567,18 @@ export const CanvasRenderer = memo(function CanvasRenderer({
       isLongPressRef.current = false
       touchStartPosRef.current = null
       hasMovedRef.current = false
+      wasPinchingRef.current = false
       return
     }
 
-    if (hasMovedRef.current) {
+    if (
+      hasMovedRef.current ||
+      wasPinchingRef.current ||
+      isPinchingRef.current
+    ) {
       touchStartPosRef.current = null
       hasMovedRef.current = false
+      wasPinchingRef.current = false
       return
     }
 
@@ -574,9 +611,11 @@ export const CanvasRenderer = memo(function CanvasRenderer({
 
     touchStartPosRef.current = null
     hasMovedRef.current = false
+    wasPinchingRef.current = false
   }, [
     isMobile,
     gameState,
+    isPinchingRef,
     isZoomedOut,
     screenToCell,
     getCellState,
@@ -594,6 +633,7 @@ export const CanvasRenderer = memo(function CanvasRenderer({
     isLongPressRef.current = false
     touchStartPosRef.current = null
     hasMovedRef.current = false
+    wasPinchingRef.current = false
   }, [])
 
   return (

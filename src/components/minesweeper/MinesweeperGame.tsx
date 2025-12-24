@@ -119,6 +119,7 @@ export function MinesweeperGame({
   const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null)
   const hasDraggedRef = useRef(false)
   const dragButtonRef = useRef<number | null>(null)
+  const isPinchingRef = useRef<boolean>(false)
 
   const saveGame = useServerFn(saveGameFn)
   const deleteGameSave = useServerFn(deleteGameSaveFn)
@@ -614,49 +615,122 @@ export function MinesweeperGame({
     x: number
     y: number
     distance?: number
+    centerX?: number
+    centerY?: number
+    initialZoom?: number
   } | null>(null)
 
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       if (e.touches.length === 1) {
+        isPinchingRef.current = false
         touchStartRef.current = {
           x: e.touches[0].clientX - offset.x,
           y: e.touches[0].clientY - offset.y,
         }
       } else if (e.touches.length === 2) {
+        // Mark as pinching immediately when second finger touches
+        isPinchingRef.current = true
+
         const dx = e.touches[0].clientX - e.touches[1].clientX
         const dy = e.touches[0].clientY - e.touches[1].clientY
+        const distance = Math.sqrt(dx * dx + dy * dy)
+
+        // Calculate pinch center in screen coordinates
+        const rect = containerRef.current?.getBoundingClientRect()
+        const centerX =
+          (e.touches[0].clientX + e.touches[1].clientX) / 2 - (rect?.left ?? 0)
+        const centerY =
+          (e.touches[0].clientY + e.touches[1].clientY) / 2 - (rect?.top ?? 0)
+
         touchStartRef.current = {
           x: offset.x,
           y: offset.y,
-          distance: Math.sqrt(dx * dx + dy * dy),
+          distance,
+          centerX,
+          centerY,
+          initialZoom: zoom,
         }
       }
     },
-    [offset],
+    [offset, zoom],
   )
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStartRef.current) return
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchStartRef.current) return
 
-    if (e.touches.length === 1 && !touchStartRef.current.distance) {
-      setOffset({
-        x: e.touches[0].clientX - touchStartRef.current.x,
-        y: e.touches[0].clientY - touchStartRef.current.y,
-      })
-    } else if (e.touches.length === 2 && touchStartRef.current.distance) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      const distance = Math.sqrt(dx * dx + dy * dy)
-      const scale = distance / touchStartRef.current.distance
-      setZoom((z) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z * scale)))
-      touchStartRef.current.distance = distance
-    }
-  }, [])
+      if (
+        e.touches.length === 1 &&
+        !touchStartRef.current.distance &&
+        !isPinchingRef.current
+      ) {
+        // Single finger pan (only if not pinching)
+        setOffset({
+          x: e.touches[0].clientX - touchStartRef.current.x,
+          y: e.touches[0].clientY - touchStartRef.current.y,
+        })
+      } else if (e.touches.length === 2 && touchStartRef.current.distance) {
+        // Pinch zoom
+        isPinchingRef.current = true
 
-  const handleTouchEnd = useCallback(() => {
-    touchStartRef.current = null
-  }, [])
+        const dx = e.touches[0].clientX - e.touches[1].clientX
+        const dy = e.touches[0].clientY - e.touches[1].clientY
+        const distance = Math.sqrt(dx * dx + dy * dy)
+
+        // Calculate scale with reduced sensitivity for smoother zoom
+        const rawScale = distance / touchStartRef.current.distance
+        // Dampen the scale change for slower zoom (0.3 = 30% of the raw scale change)
+        const dampenedScale = 1 + (rawScale - 1) * 0.3
+
+        const initialZoom = touchStartRef.current.initialZoom ?? zoom
+        const newZoom = Math.max(
+          MIN_ZOOM,
+          Math.min(MAX_ZOOM, initialZoom * dampenedScale),
+        )
+
+        // Zoom towards pinch center
+        const centerX = touchStartRef.current.centerX ?? 0
+        const centerY = touchStartRef.current.centerY ?? 0
+        const initialOffsetX = touchStartRef.current.x
+        const initialOffsetY = touchStartRef.current.y
+
+        // Calculate new offset to keep pinch center stationary
+        const zoomRatio = newZoom / initialZoom
+        const newOffsetX = centerX - (centerX - initialOffsetX) * zoomRatio
+        const newOffsetY = centerY - (centerY - initialOffsetY) * zoomRatio
+
+        setZoom(newZoom)
+        setOffset({ x: newOffsetX, y: newOffsetY })
+      }
+    },
+    [zoom],
+  )
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      // If we still have touches, don't reset pinching state yet
+      if (e.touches.length > 0) {
+        // Transitioning from 2 fingers to 1 finger
+        if (e.touches.length === 1) {
+          // Reset touch start for single finger pan, but keep pinching flag
+          // to prevent accidental cell interactions
+          touchStartRef.current = {
+            x: e.touches[0].clientX - offset.x,
+            y: e.touches[0].clientY - offset.y,
+          }
+        }
+        return
+      }
+
+      // All fingers lifted - reset after a short delay to prevent tap from firing
+      setTimeout(() => {
+        isPinchingRef.current = false
+      }, 100)
+      touchStartRef.current = null
+    },
+    [offset],
+  )
 
   // Reset game with new seed
   const handleReset = useCallback(async () => {
@@ -838,6 +912,7 @@ export function MinesweeperGame({
             gameState={gameState}
             shouldAllowClick={shouldAllowClick}
             onLongPressAction={triggerFlash}
+            isPinchingRef={isPinchingRef}
           />
         )}
       </div>
