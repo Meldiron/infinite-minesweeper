@@ -513,7 +513,7 @@ export const CanvasRenderer = memo(function CanvasRenderer({
             onReveal(cellX, cellY)
           }
         }
-      }, 500)
+      }, 300)
     },
     [
       isMobile,

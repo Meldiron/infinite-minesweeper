@@ -25,7 +25,7 @@ const NUMBER_COLORS_COMPLETE: Record<number, string> = {
   8: 'text-stone-800',
 }
 
-const LONG_PRESS_DURATION = 500 // 500ms for long press
+const LONG_PRESS_DURATION = 300 // 300ms for long press
 
 export type MobileInteractionMode = 'default' | 'reverse'
 
