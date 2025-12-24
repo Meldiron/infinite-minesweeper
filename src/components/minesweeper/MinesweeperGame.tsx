@@ -394,7 +394,7 @@ export function MinesweeperGame({
     setExportProgress(0)
 
     const mapSize = EXPORT_SECTOR_SIZE * EXPORT_PIXEL_SCALE // 1000x1000 pixels for map
-    const legendHeight = 140 // Height for legend panel
+    const legendHeight = 160 // Height for legend panel
     const canvasWidth = mapSize
     const canvasHeight = mapSize + legendHeight
 
@@ -485,9 +485,9 @@ export function MinesweeperGame({
 
     // Branding - "Infinite Minesweeper"
     ctx.fillStyle = '#fafaf9' // stone-50
-    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif'
+    ctx.font = 'bold 32px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('Infinite Minesweeper', 20, legendY + 5)
+    ctx.fillText('Infinite Minesweeper', 20, legendY + 25)
 
     // Current date and time
     const now = new Date()
@@ -500,11 +500,11 @@ export function MinesweeperGame({
     })
     ctx.fillStyle = '#78716c' // stone-500
     ctx.font = '12px system-ui, -apple-system, sans-serif'
-    ctx.fillText(dateTimeStr, 20, legendY + 25)
+    ctx.fillText(dateTimeStr, 20, legendY + 45)
 
     // Color legend
     const legendStartX = 20
-    const legendItemY = legendY + 55
+    const legendItemY = legendY + 75
     const boxSize = 16
     const legendItems = [
       { color: '#44403c', label: 'Untouched' },
@@ -538,7 +538,7 @@ export function MinesweeperGame({
     ctx.fillText(
       `${revealedCount.toLocaleString()} tiles opened`,
       statsX,
-      legendY + 5,
+      legendY + 25,
     )
 
     // Completion percentage
@@ -548,14 +548,14 @@ export function MinesweeperGame({
     ctx.fillText(
       `${finishedCount.toLocaleString()} / ${totalSectors.toLocaleString()} sectors (${completionPercent}% complete)`,
       statsX,
-      legendY + 30,
+      legendY + 50,
     )
 
     // In progress count
     ctx.fillText(
       `${inProgressCount.toLocaleString()} sectors in progress`,
       statsX,
-      legendY + 50,
+      legendY + 70,
     )
 
     // Map coordinates info
@@ -564,7 +564,7 @@ export function MinesweeperGame({
     ctx.fillText(
       `Map: sectors (${minSectorX}, ${minSectorY}) to (${minSectorX + EXPORT_SECTOR_SIZE - 1}, ${minSectorY + EXPORT_SECTOR_SIZE - 1})`,
       statsX,
-      legendY + 70,
+      legendY + 90,
     )
 
     setExportProgress(100)
