@@ -1,9 +1,17 @@
 export { MinesweeperGame } from './MinesweeperGame'
-export { Cell, type MobileInteractionMode } from './Cell'
+export { Cell } from './Cell'
+export type { MobileInteractionMode } from './Cell'
+export { CanvasRenderer } from './CanvasRenderer'
 export {
   GameControls,
   GameInstructions,
   SaveIndicator,
   InteractionModeToggle,
 } from './GameControls'
-export { useInfiniteGrid } from './useInfiniteGrid'
+export { useInfiniteGrid, SECTOR_SIZE } from './useInfiniteGrid'
+export type {
+  CellState,
+  GameState,
+  SectorState,
+  InitialSaveData,
+} from './useInfiniteGrid'

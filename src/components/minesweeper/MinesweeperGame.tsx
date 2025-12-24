@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { Cell, type MobileInteractionMode } from './Cell'
+import { CanvasRenderer } from './CanvasRenderer'
+import type { MobileInteractionMode } from './Cell'
 import {
   GameControls,
   GameInstructions,
@@ -313,7 +314,6 @@ export function MinesweeperGame({
   }, [isDirty])
 
   const cellSize = BASE_CELL_SIZE * zoom
-  const sectorPixelSize = SECTOR_SIZE * cellSize
   const isZoomedOut = zoom <= SECTOR_VIEW_THRESHOLD
 
   // Calculate sector position under cursor
@@ -447,79 +447,6 @@ export function MinesweeperGame({
 
   // Check if at minimum zoom (5%)
   const isAtMinZoom = zoom <= 0.05
-
-  // Calculate visible cells (only when not in sector view)
-  const visibleCells = useMemo(() => {
-    if (isZoomedOut) return []
-    if (containerSize.width === 0 || containerSize.height === 0) return []
-
-    const padding = 2 // Extra cells to render outside viewport
-    const startX = Math.floor(-offset.x / cellSize) - padding
-    const startY = Math.floor(-offset.y / cellSize) - padding
-    const endX =
-      Math.ceil((containerSize.width - offset.x) / cellSize) + padding
-    const endY =
-      Math.ceil((containerSize.height - offset.y) / cellSize) + padding
-
-    const cells: { x: number; y: number }[] = []
-    for (let y = startY; y <= endY; y++) {
-      for (let x = startX; x <= endX; x++) {
-        cells.push({ x, y })
-      }
-    }
-    return cells
-  }, [containerSize, offset, cellSize, isZoomedOut])
-
-  // Calculate visible sectors (only when in sector view)
-  const visibleSectors = useMemo(() => {
-    if (!isZoomedOut) return []
-    if (containerSize.width === 0 || containerSize.height === 0) return []
-
-    const padding = 1
-    const startSectorX = Math.floor(-offset.x / sectorPixelSize) - padding
-    const endSectorX =
-      Math.ceil((containerSize.width - offset.x) / sectorPixelSize) + padding
-    const startSectorY = Math.floor(-offset.y / sectorPixelSize) - padding
-    const endSectorY =
-      Math.ceil((containerSize.height - offset.y) / sectorPixelSize) + padding
-
-    const sectors: { sectorX: number; sectorY: number }[] = []
-    for (let sy = startSectorY; sy <= endSectorY; sy++) {
-      for (let sx = startSectorX; sx <= endSectorX; sx++) {
-        sectors.push({ sectorX: sx, sectorY: sy })
-      }
-    }
-    return sectors
-  }, [containerSize, offset, sectorPixelSize, isZoomedOut])
-
-  // Calculate visible sector grid lines
-  const sectorLines = useMemo(() => {
-    if (containerSize.width === 0 || containerSize.height === 0) {
-      return { vertical: [], horizontal: [] }
-    }
-
-    const padding = 1
-    // Calculate sector boundaries in sector coordinates
-    const startSectorX = Math.floor(-offset.x / sectorPixelSize) - padding
-    const endSectorX =
-      Math.ceil((containerSize.width - offset.x) / sectorPixelSize) + padding
-    const startSectorY = Math.floor(-offset.y / sectorPixelSize) - padding
-    const endSectorY =
-      Math.ceil((containerSize.height - offset.y) / sectorPixelSize) + padding
-
-    const vertical: number[] = []
-    const horizontal: number[] = []
-
-    for (let sx = startSectorX; sx <= endSectorX; sx++) {
-      vertical.push(sx * sectorPixelSize)
-    }
-
-    for (let sy = startSectorY; sy <= endSectorY; sy++) {
-      horizontal.push(sy * sectorPixelSize)
-    }
-
-    return { vertical, horizontal }
-  }, [containerSize, offset, sectorPixelSize])
 
   // Zoom handlers
   const handleZoomIn = useCallback(() => {
@@ -762,22 +689,7 @@ export function MinesweeperGame({
     navigate({ to: '/leaderboard' })
   }, [navigate])
 
-  // Sector colors based on state (dark theme only)
-  const getSectorColors = (state: SectorState): string => {
-    switch (state) {
-      case 'untouched':
-        return 'bg-stone-700 border-stone-600'
-      case 'in-progress':
-        return 'bg-amber-700 border-amber-600'
-      case 'finished':
-        return 'bg-green-700 border-green-600'
-    }
-  }
-
   const isWaiting = gameState === 'waiting'
-
-  // Thinner borders at very low zoom levels
-  const sectorBorderClass = zoom <= 0.1 ? 'border' : 'border-2'
 
   return (
     <div
@@ -899,7 +811,7 @@ export function MinesweeperGame({
 
       <div
         ref={containerRef}
-        className="w-full h-full cursor-grab active:cursor-grabbing"
+        className="w-full h-full cursor-grab active:cursor-grabbing relative"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -910,93 +822,29 @@ export function MinesweeperGame({
         onTouchEnd={handleTouchEnd}
         onContextMenu={(e) => e.preventDefault()}
       >
-        <div
-          className="relative"
-          style={{
-            transform: `translate(${offset.x}px, ${offset.y}px)`,
-            willChange: 'transform',
-          }}
-        >
-          {/* Render cells when zoomed in */}
-          {!isZoomedOut &&
-            visibleCells.map(({ x, y }) => {
-              const state = getCellState(x, y)
-              const isMine = hasMine(x, y)
-              const adjacentMines = countAdjacentMines(x, y)
-              const sectorComplete = isSectorComplete(x, y)
-
-              return (
-                <Cell
-                  key={`${x},${y}`}
-                  x={x}
-                  y={y}
-                  size={cellSize}
-                  state={state}
-                  isMine={isMine}
-                  adjacentMines={adjacentMines}
-                  onReveal={revealCell}
-                  onFlag={toggleFlag}
-                  gameOver={false}
-                  sectorComplete={sectorComplete}
-                  isMobile={isMobile}
-                  mobileMode={mobileMode}
-                  onLongPressAction={triggerFlash}
-                  shouldAllowClick={shouldAllowClick}
-                />
-              )
-            })}
-
-          {/* Render sector blocks when zoomed out */}
-          {isZoomedOut &&
-            visibleSectors.map(({ sectorX, sectorY }) => {
-              const state = getSectorState(sectorX, sectorY)
-              const colors = getSectorColors(state)
-
-              return (
-                <div
-                  key={`sector-${sectorX},${sectorY}`}
-                  className={`absolute ${colors} ${sectorBorderClass} transition-colors duration-200 cursor-pointer hover:brightness-110`}
-                  style={{
-                    left: sectorX * sectorPixelSize,
-                    top: sectorY * sectorPixelSize,
-                    width: sectorPixelSize,
-                    height: sectorPixelSize,
-                  }}
-                  onClick={() => handleSectorClick(sectorX, sectorY)}
-                />
-              )
-            })}
-
-          {/* Render sector grid lines - vertical (only when zoomed in) */}
-          {!isZoomedOut &&
-            sectorLines.vertical.map((x) => (
-              <div
-                key={`v-${x}`}
-                className="absolute bg-stone-400/50 pointer-events-none"
-                style={{
-                  left: x,
-                  top: -10000,
-                  width: 2,
-                  height: 20000,
-                }}
-              />
-            ))}
-
-          {/* Render sector grid lines - horizontal (only when zoomed in) */}
-          {!isZoomedOut &&
-            sectorLines.horizontal.map((y) => (
-              <div
-                key={`h-${y}`}
-                className="absolute bg-stone-400/50 pointer-events-none"
-                style={{
-                  left: -10000,
-                  top: y,
-                  width: 20000,
-                  height: 2,
-                }}
-              />
-            ))}
-        </div>
+        {containerSize.width > 0 && containerSize.height > 0 && (
+          <CanvasRenderer
+            width={containerSize.width}
+            height={containerSize.height}
+            cellSize={cellSize}
+            offset={offset}
+            isZoomedOut={isZoomedOut}
+            zoom={zoom}
+            getCellState={getCellState}
+            hasMine={hasMine}
+            countAdjacentMines={countAdjacentMines}
+            isSectorComplete={isSectorComplete}
+            getSectorState={getSectorState}
+            onReveal={revealCell}
+            onFlag={toggleFlag}
+            onSectorClick={handleSectorClick}
+            isMobile={isMobile}
+            mobileMode={mobileMode}
+            gameState={gameState}
+            shouldAllowClick={shouldAllowClick}
+            onLongPressAction={triggerFlash}
+          />
+        )}
       </div>
     </div>
   )
