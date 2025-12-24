@@ -16,23 +16,23 @@ const NUMBER_COLORS: Record<number, string> = {
   8: '#a8a29e', // stone-400
 }
 
-// Number colors for completed sectors (darker for contrast on green)
+// Number colors for completed sectors (lighter for contrast on dark green)
 const NUMBER_COLORS_COMPLETE: Record<number, string> = {
-  1: '#1d4ed8', // blue-700
-  2: '#166534', // green-800
-  3: '#b91c1c', // red-700
-  4: '#6b21a8', // purple-800
-  5: '#92400e', // amber-800
-  6: '#0e7490', // cyan-700
-  7: '#1c1917', // stone-900
-  8: '#292524', // stone-800
+  1: '#60a5fa', // blue-400
+  2: '#4ade80', // green-400
+  3: '#f87171', // red-400
+  4: '#c084fc', // purple-400
+  5: '#fbbf24', // amber-400
+  6: '#22d3ee', // cyan-400
+  7: '#d6d3d1', // stone-300
+  8: '#a8a29e', // stone-400
 }
 
 // Sector colors
 const SECTOR_COLORS: Record<SectorState, { bg: string; border: string }> = {
   untouched: { bg: '#44403c', border: '#57534e' }, // stone-700, stone-600
   'in-progress': { bg: '#b45309', border: '#d97706' }, // amber-700, amber-600
-  finished: { bg: '#15803d', border: '#16a34a' }, // green-700, green-600
+  finished: { bg: '#14532d', border: '#22c55e' }, // green-900, green-500 (dark bg, vibrant border)
 }
 
 // Cell colors
@@ -44,9 +44,9 @@ const CELL_COLORS = {
       shadow: '#1c1917', // stone-900
     },
     complete: {
-      bg: '#4ade80', // green-400
-      highlight: '#86efac', // green-300
-      shadow: '#16a34a', // green-600
+      bg: '#14532d', // green-900 (dark green)
+      highlight: '#22c55e', // green-500 (vibrant highlight)
+      shadow: '#052e16', // green-950 (darker shadow)
     },
   },
   revealed: {
@@ -55,8 +55,8 @@ const CELL_COLORS = {
       border: '#44403c', // stone-700
     },
     complete: {
-      bg: '#4ade80', // green-400
-      border: '#22c55e', // green-500
+      bg: '#052e16', // green-950 (very dark green)
+      border: '#14532d', // green-900
     },
   },
   mine: {
@@ -66,9 +66,9 @@ const CELL_COLORS = {
       icon: '#a8a29e', // stone-400
     },
     complete: {
-      bg: '#22c55e', // green-500
-      border: '#16a34a', // green-600
-      icon: '#166534', // green-800
+      bg: '#14532d', // green-900 (dark green)
+      border: '#22c55e', // green-500 (vibrant border)
+      icon: '#4ade80', // green-400 (vibrant icon)
     },
   },
   exploded: {
@@ -78,7 +78,7 @@ const CELL_COLORS = {
   },
   flag: {
     normal: '#dc2626', // red-600
-    complete: '#166534', // green-800
+    complete: '#4ade80', // green-400 (vibrant green for visibility on dark)
   },
 }
 
