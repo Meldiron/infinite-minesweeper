@@ -31,12 +31,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Progress } from '@/components/ui/progress'
 import { Switch } from '@/components/ui/switch'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import type { GameState } from './useInfiniteGrid'
 import type { MobileInteractionMode } from './Cell'
 
@@ -111,25 +105,17 @@ export function GameControls({
               )}
             </div>
             <div className="w-px h-5 bg-stone-600" />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2 cursor-default">
-                    <Grid3X3 size={18} className="text-stone-300" />
-                    <span className="font-mono text-sm font-medium">
-                      {revealedCount}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="bottom"
-                  sideOffset={8}
-                  className="!bg-stone-900 text-stone-100 border-stone-700 [&>svg]:hidden"
-                >
-                  <p>Opened tiles</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div className="relative group">
+              <div className="flex items-center gap-2 cursor-default">
+                <Grid3X3 size={18} className="text-stone-300" />
+                <span className="font-mono text-sm font-medium">
+                  {revealedCount}
+                </span>
+              </div>
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-2 py-1 bg-stone-900 text-stone-100 text-xs rounded border border-stone-700 whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-150">
+                Opened tiles
+              </div>
+            </div>
           </div>
 
           <Button
