@@ -187,17 +187,6 @@ export const CanvasRenderer = memo(function CanvasRenderer({
           // Draw sector background
           ctx.fillStyle = colors.bg
           ctx.fillRect(x, y, sectorPixelSize, sectorPixelSize)
-
-          // Draw sector border
-          const borderWidth = zoom <= 0.1 ? 1 : 2
-          ctx.strokeStyle = colors.border
-          ctx.lineWidth = borderWidth
-          ctx.strokeRect(
-            x + borderWidth / 2,
-            y + borderWidth / 2,
-            sectorPixelSize - borderWidth,
-            sectorPixelSize - borderWidth,
-          )
         }
       }
     } else {
