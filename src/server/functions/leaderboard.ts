@@ -76,6 +76,46 @@ export const getLeaderboardCountFn = createServerFn({ method: 'GET' }).handler(
   },
 )
 
+// Get current user's stats and rank
+export const getCurrentUserRankFn = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ userId: z.string() }))
+  .handler(async ({ data }) => {
+    try {
+      // Get user's stats
+      const userStatsResult = await db.userStats.list([
+        Query.equal('createdBy', [data.userId]),
+        Query.limit(1),
+      ])
+
+      if (userStatsResult.rows.length === 0) {
+        return { stats: null, rank: null }
+      }
+
+      const userStats = userStatsResult.rows[0]
+
+      // Count how many players have more tiles opened than this user
+      const higherRankedResult = await db.userStats.list([
+        Query.greaterThan('tilesOpened', userStats.tilesOpened),
+        Query.limit(1),
+      ])
+
+      // Rank is the count of players with more tiles + 1
+      const rank = higherRankedResult.total + 1
+
+      return {
+        stats: {
+          id: userStats.$id,
+          nickname: userStats.nickname,
+          tilesOpened: userStats.tilesOpened,
+        },
+        rank,
+      }
+    } catch (error) {
+      console.error('Failed to fetch user rank:', error)
+      return { stats: null, rank: null }
+    }
+  })
+
 // Sync missing userStats from userOnboarding records
 // This ensures all onboarded users appear on the leaderboard
 export const syncLeaderboardStatsFn = createServerFn({

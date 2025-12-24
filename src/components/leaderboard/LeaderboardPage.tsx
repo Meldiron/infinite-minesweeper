@@ -19,11 +19,13 @@ import {
   ChevronDown,
   Users,
   Zap,
+  User,
 } from 'lucide-react'
 import {
   getLeaderboardFn,
   getLeaderboardCountFn,
   syncLeaderboardStatsFn,
+  getCurrentUserRankFn,
 } from '@/server/functions/leaderboard'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -33,6 +35,15 @@ type LeaderboardEntry = {
   tilesOpened: number
 }
 
+type UserRankData = {
+  stats: {
+    id: string
+    nickname: string
+    tilesOpened: number
+  } | null
+  rank: number | null
+}
+
 export function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
@@ -40,12 +51,14 @@ export function LeaderboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [totalPlayers, setTotalPlayers] = useState(0)
+  const [userRankData, setUserRankData] = useState<UserRankData | null>(null)
 
   const { currentUser } = useAuth()
 
   const getLeaderboard = useServerFn(getLeaderboardFn)
   const getLeaderboardCount = useServerFn(getLeaderboardCountFn)
   const syncLeaderboardStats = useServerFn(syncLeaderboardStatsFn)
+  const getCurrentUserRank = useServerFn(getCurrentUserRankFn)
 
   // Initial load
   useEffect(() => {
@@ -64,6 +77,14 @@ export function LeaderboardPage() {
         setNextCursor(leaderboardResult.nextCursor)
         setHasMore(leaderboardResult.hasMore)
         setTotalPlayers(countResult.total)
+
+        // Fetch current user's rank if logged in
+        if (currentUser) {
+          const rankResult = await getCurrentUserRank({
+            data: { userId: currentUser.$id },
+          })
+          setUserRankData(rankResult)
+        }
       } catch (error) {
         console.error('Failed to load leaderboard:', error)
       } finally {
@@ -72,7 +93,13 @@ export function LeaderboardPage() {
     }
 
     loadInitial()
-  }, [getLeaderboard, getLeaderboardCount, syncLeaderboardStats])
+  }, [
+    getLeaderboard,
+    getLeaderboardCount,
+    syncLeaderboardStats,
+    getCurrentUserRank,
+    currentUser,
+  ])
 
   // Load more
   const loadMore = useCallback(async () => {
@@ -168,6 +195,50 @@ export function LeaderboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Your Stats Card - Only show for logged in users */}
+        {currentUser && userRankData?.stats && (
+          <Card className="bg-gradient-to-r from-amber-900/20 to-orange-900/20 border-amber-800/30 mb-6">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
+                    <User size={20} className="text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-stone-400 text-xs uppercase tracking-wide">
+                      Your Stats
+                    </p>
+                    <p className="text-stone-100 font-semibold">
+                      {userRankData.stats.nickname}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <p className="text-stone-400 text-xs uppercase tracking-wide">
+                      Rank
+                    </p>
+                    <p className="text-amber-500 font-bold text-xl">
+                      #{userRankData.rank}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-stone-400 text-xs uppercase tracking-wide">
+                      Tiles
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <Grid3X3 size={14} className="text-amber-500" />
+                      <span className="text-amber-500 font-bold text-xl">
+                        {formatNumber(userRankData.stats.tilesOpened)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Leaderboard */}
         <Card className="bg-stone-800 border-stone-700">
