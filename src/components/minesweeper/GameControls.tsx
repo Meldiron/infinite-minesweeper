@@ -100,7 +100,7 @@ export function GameControls({
               ))}
               {timeUntilNextLife !== null && lives < maxLives && (
                 <span className="ml-2 font-mono text-xs text-stone-400">
-                  +1 in {formatTime(timeUntilNextLife)}
+                  {formatTime(timeUntilNextLife)}
                 </span>
               )}
             </div>
