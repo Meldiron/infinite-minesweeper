@@ -805,6 +805,13 @@ export function MinesweeperGame({
         onExportPNG={handleExportPNG}
         isAtMinZoom={isAtMinZoom}
         exportProgress={exportProgress}
+        saveStatus={{
+          isDirty,
+          isSaving,
+          lastSaveTime,
+          error: saveError,
+          onForceSave: performSave,
+        }}
       />
 
       <GameInstructions

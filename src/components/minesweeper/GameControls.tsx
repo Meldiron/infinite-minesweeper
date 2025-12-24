@@ -50,6 +50,14 @@ type GameControlsProps = {
   onExportPNG?: () => void
   isAtMinZoom?: boolean
   exportProgress?: number | null
+  // Save status props for mobile row
+  saveStatus?: {
+    isDirty: boolean
+    isSaving: boolean
+    lastSaveTime: number | null
+    error: string | null
+    onForceSave: () => void
+  }
 }
 
 function formatTime(ms: number): string {
@@ -74,8 +82,71 @@ export function GameControls({
   onExportPNG,
   isAtMinZoom,
   exportProgress,
+  saveStatus,
 }: GameControlsProps) {
   const isExporting = exportProgress !== null && exportProgress !== undefined
+
+  // Helper to render save status content
+  const renderSaveStatus = () => {
+    if (!saveStatus) return null
+
+    const { isDirty, isSaving, error, onForceSave } = saveStatus
+
+    const getStatusInfo = () => {
+      if (error) {
+        return {
+          icon: <AlertCircle size={14} className="text-red-400" />,
+          text: 'Save failed',
+          color: 'text-red-400',
+        }
+      }
+      if (isSaving) {
+        return {
+          icon: <Loader2 size={14} className="text-amber-400 animate-spin" />,
+          text: 'Saving...',
+          color: 'text-amber-400',
+        }
+      }
+      if (isDirty) {
+        return {
+          icon: <CloudOff size={14} className="text-stone-400" />,
+          text: 'Unsaved',
+          color: 'text-stone-400',
+        }
+      }
+      return {
+        icon: <Check size={14} className="text-green-400" />,
+        text: 'Saved',
+        color: 'text-green-400',
+      }
+    }
+
+    const status = getStatusInfo()
+
+    return (
+      <button
+        onClick={onForceSave}
+        disabled={isSaving || (!isDirty && !error)}
+        className={`
+          flex items-center gap-2 px-3 py-1.5 rounded-full
+          bg-stone-900/95 backdrop-blur-sm shadow-lg
+          transition-all duration-200
+          ${isDirty || error ? 'cursor-pointer hover:bg-stone-800' : 'cursor-default'}
+          ${status.color}
+        `}
+        title={
+          isDirty
+            ? 'Click to save now'
+            : error
+              ? 'Click to retry'
+              : 'Game saved'
+        }
+      >
+        {status.icon}
+        <span className="text-xs font-medium">{status.text}</span>
+      </button>
+    )
+  }
 
   return (
     <div
@@ -212,7 +283,14 @@ export function GameControls({
         </div>
       </div>
 
-      {/* Second row - Export button (only at min zoom) */}
+      {/* Second row - Save status on mobile */}
+      {saveStatus && (
+        <div className="flex justify-end md:hidden pointer-events-auto">
+          {renderSaveStatus()}
+        </div>
+      )}
+
+      {/* Third row - Export button (only at min zoom) */}
       {(isAtMinZoom || isExporting) && onExportPNG && (
         <div className="flex justify-end">
           <div className="bg-stone-900/95 backdrop-blur-sm rounded-lg shadow-lg pointer-events-auto overflow-hidden">
@@ -369,7 +447,7 @@ export function SaveIndicator({
 
   return (
     <div
-      className="absolute right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-10"
+      className="absolute right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-10 hidden md:block"
       style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
     >
       <button
