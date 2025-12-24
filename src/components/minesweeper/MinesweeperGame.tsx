@@ -34,6 +34,11 @@ const AUTO_SAVE_DELAY = 3000 // 3 seconds of inactivity before auto-save
 const PREFERENCES_SAVE_DELAY = 1000 // 1 second delay for preferences
 const DRAG_THRESHOLD = 5 // Pixels moved before considering it a drag
 
+// Detect macOS for trackpad-friendly zoom behavior
+const isMacOS =
+  typeof navigator !== 'undefined' &&
+  /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+
 // Detect mobile during initialization (before hooks are available)
 const getInitialZoom = () => {
   if (typeof window === 'undefined') return 1
@@ -491,12 +496,22 @@ export function MinesweeperGame({
       e.preventDefault()
 
       let newZoom: number
-      if (e.deltaY > 0) {
-        // Zooming out
-        newZoom = Math.max(MIN_ZOOM, zoom - ZOOM_STEP)
+
+      if (isMacOS) {
+        // macOS trackpad: use smooth proportional zoom
+        // Trackpads send small deltaY values frequently, so we scale proportionally
+        const zoomSensitivity = 0.002 // Adjust sensitivity for trackpad
+        const zoomDelta = -e.deltaY * zoomSensitivity
+        newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * (1 + zoomDelta)))
       } else {
-        // Zooming in
-        newZoom = Math.min(MAX_ZOOM, zoom + ZOOM_STEP)
+        // Windows/Linux: use fixed step zoom
+        if (e.deltaY > 0) {
+          // Zooming out
+          newZoom = Math.max(MIN_ZOOM, zoom - ZOOM_STEP)
+        } else {
+          // Zooming in
+          newZoom = Math.min(MAX_ZOOM, zoom + ZOOM_STEP)
+        }
       }
 
       // Zoom towards mouse position
