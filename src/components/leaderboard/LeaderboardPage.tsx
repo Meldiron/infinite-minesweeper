@@ -22,10 +22,8 @@ import {
   User,
 } from 'lucide-react'
 import {
+  getLeaderboardDataFn,
   getLeaderboardFn,
-  getLeaderboardCountFn,
-  syncLeaderboardStatsFn,
-  getCurrentUserRankFn,
 } from '@/server/functions/leaderboard'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -55,35 +53,29 @@ export function LeaderboardPage() {
 
   const { currentUser } = useAuth()
 
+  const getLeaderboardData = useServerFn(getLeaderboardDataFn)
   const getLeaderboard = useServerFn(getLeaderboardFn)
-  const getLeaderboardCount = useServerFn(getLeaderboardCountFn)
-  const syncLeaderboardStats = useServerFn(syncLeaderboardStatsFn)
-  const getCurrentUserRank = useServerFn(getCurrentUserRankFn)
 
-  // Initial load
+  // Initial load - single optimized request
   useEffect(() => {
     const loadInitial = async () => {
       setIsLoading(true)
       try {
-        // First sync stats to ensure all onboarded users have public-readable stats
-        await syncLeaderboardStats()
+        // Single request gets everything: entries, count, and user rank
+        const result = await getLeaderboardData({
+          data: {
+            cursor: null,
+            userId: currentUser?.$id ?? null,
+          },
+        })
 
-        const [leaderboardResult, countResult] = await Promise.all([
-          getLeaderboard({ data: { cursor: null } }),
-          getLeaderboardCount(),
-        ])
+        setEntries(result.entries)
+        setNextCursor(result.nextCursor)
+        setHasMore(result.hasMore)
+        setTotalPlayers(result.total)
 
-        setEntries(leaderboardResult.entries)
-        setNextCursor(leaderboardResult.nextCursor)
-        setHasMore(leaderboardResult.hasMore)
-        setTotalPlayers(countResult.total)
-
-        // Fetch current user's rank if logged in
-        if (currentUser) {
-          const rankResult = await getCurrentUserRank({
-            data: { userId: currentUser.$id },
-          })
-          setUserRankData(rankResult)
+        if (result.userRank) {
+          setUserRankData(result.userRank)
         }
       } catch (error) {
         console.error('Failed to load leaderboard:', error)
@@ -93,13 +85,7 @@ export function LeaderboardPage() {
     }
 
     loadInitial()
-  }, [
-    getLeaderboard,
-    getLeaderboardCount,
-    syncLeaderboardStats,
-    getCurrentUserRank,
-    currentUser,
-  ])
+  }, [getLeaderboardData, currentUser])
 
   // Load more
   const loadMore = useCallback(async () => {

@@ -1,8 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { authMiddleware } from './auth'
-import { db } from '@/server/lib/db'
-import { Query } from 'node-appwrite'
+import { db, Query } from './db-helper'
 
 // Schema for saving game state
 const saveGameSchema = z.object({

@@ -1,8 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { authMiddleware } from './auth'
-import { db } from '@/server/lib/db'
-import { Query, Permission, Role } from 'node-appwrite'
+import { db, Query, Permission, Role } from './db-helper'
 
 // Get the current user's onboarding status
 export const getOnboardingStatusFn = createServerFn({ method: 'GET' }).handler(
