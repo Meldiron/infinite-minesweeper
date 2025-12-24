@@ -530,6 +530,29 @@ export function MinesweeperGame({
     setOffset({ x: 0, y: 0 })
   }, [])
 
+  // Handle sector click when zoomed out - zoom to 120% centered on clicked sector
+  const handleSectorClick = useCallback(
+    (sectorX: number, sectorY: number) => {
+      // Don't allow click if we just dragged
+      if (hasDraggedRef.current) return
+
+      const targetZoom = 1.2 // 120%
+      const newCellSize = BASE_CELL_SIZE * targetZoom
+
+      // Calculate the center of the clicked sector in world coordinates
+      const sectorCenterX = (sectorX + 0.5) * SECTOR_SIZE * newCellSize
+      const sectorCenterY = (sectorY + 0.5) * SECTOR_SIZE * newCellSize
+
+      // Calculate offset to center the sector on screen
+      const newOffsetX = containerSize.width / 2 - sectorCenterX
+      const newOffsetY = containerSize.height / 2 - sectorCenterY
+
+      setZoom(targetZoom)
+      setOffset({ x: newOffsetX, y: newOffsetY })
+    },
+    [containerSize],
+  )
+
   // Mouse wheel zoom
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
@@ -917,13 +940,14 @@ export function MinesweeperGame({
               return (
                 <div
                   key={`sector-${sectorX},${sectorY}`}
-                  className={`absolute ${colors} ${sectorBorderClass} transition-colors duration-200`}
+                  className={`absolute ${colors} ${sectorBorderClass} transition-colors duration-200 cursor-pointer hover:brightness-110`}
                   style={{
                     left: sectorX * sectorPixelSize,
                     top: sectorY * sectorPixelSize,
                     width: sectorPixelSize,
                     height: sectorPixelSize,
                   }}
+                  onClick={() => handleSectorClick(sectorX, sectorY)}
                 />
               )
             })}
