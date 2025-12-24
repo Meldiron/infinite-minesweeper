@@ -386,26 +386,34 @@ export function MinesweeperGame({
   }, [containerSize, offset, cellSize])
 
   // Export board as PNG (100x100 sectors, scaled to 1000x1000 pixels, centered at 0,0)
-  // Uses chunked processing to prevent browser freezing
+  // Includes legend, branding, and statistics
   const handleExportPNG = useCallback(async () => {
     // Prevent multiple exports at once
     if (exportProgress !== null) return
 
     setExportProgress(0)
 
-    const canvasSize = EXPORT_SECTOR_SIZE * EXPORT_PIXEL_SCALE // 1000x1000 pixels
+    const mapSize = EXPORT_SECTOR_SIZE * EXPORT_PIXEL_SCALE // 1000x1000 pixels for map
+    const legendHeight = 120 // Height for legend panel
+    const canvasWidth = mapSize
+    const canvasHeight = mapSize + legendHeight
+
     const canvas = document.createElement('canvas')
-    canvas.width = canvasSize
-    canvas.height = canvasSize
+    canvas.width = canvasWidth
+    canvas.height = canvasHeight
     const ctx = canvas.getContext('2d')
     if (!ctx) {
       setExportProgress(null)
       return
     }
 
-    // Fill with untouched color (dark gray)
+    // Fill entire canvas with dark background
+    ctx.fillStyle = '#1c1917' // stone-900
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+
+    // Fill map area with untouched color (dark gray)
     ctx.fillStyle = '#44403c' // stone-700
-    ctx.fillRect(0, 0, canvasSize, canvasSize)
+    ctx.fillRect(0, 0, mapSize, mapSize)
 
     // Calculate sector range (centered at 0,0)
     const halfSize = Math.floor(EXPORT_SECTOR_SIZE / 2)
@@ -418,6 +426,11 @@ export function MinesweeperGame({
       'in-progress': '#b45309', // amber-700
       finished: '#15803d', // green-700
     }
+
+    // Track statistics while rendering
+    let finishedCount = 0
+    let inProgressCount = 0
+    const totalSectors = EXPORT_SECTOR_SIZE * EXPORT_SECTOR_SIZE
 
     // Process in chunks to prevent freezing
     const totalRows = EXPORT_SECTOR_SIZE
@@ -432,6 +445,13 @@ export function MinesweeperGame({
             const sectorX = minSectorX + px
             const sectorY = minSectorY + py
             const state = getSectorState(sectorX, sectorY)
+
+            // Track statistics
+            if (state === 'finished') {
+              finishedCount++
+            } else if (state === 'in-progress') {
+              inProgressCount++
+            }
 
             // Only draw if not untouched (untouched is already the background)
             if (state !== 'untouched') {
@@ -448,7 +468,7 @@ export function MinesweeperGame({
         }
 
         currentRow = endRow
-        setExportProgress(Math.round((currentRow / totalRows) * 100))
+        setExportProgress(Math.round((currentRow / totalRows) * 95)) // Reserve 5% for legend
 
         // Yield to browser using requestAnimationFrame
         requestAnimationFrame(() => resolve())
@@ -459,6 +479,82 @@ export function MinesweeperGame({
     while (currentRow < totalRows) {
       await processChunk()
     }
+
+    // Draw legend panel
+    const legendY = mapSize + 15
+
+    // Branding - "Infinite Minesweeper"
+    ctx.fillStyle = '#fafaf9' // stone-50
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('Infinite Minesweeper', 20, legendY + 5)
+
+    // Color legend
+    const legendStartX = 20
+    const legendItemY = legendY + 40
+    const boxSize = 16
+    const legendItems = [
+      { color: '#44403c', label: 'Untouched' },
+      { color: '#b45309', label: 'In Progress' },
+      { color: '#15803d', label: 'Completed' },
+    ]
+
+    ctx.font = '14px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'left'
+    let currentX = legendStartX
+
+    legendItems.forEach((item) => {
+      // Draw color box
+      ctx.fillStyle = item.color
+      ctx.fillRect(currentX, legendItemY - boxSize + 4, boxSize, boxSize)
+
+      // Draw label
+      ctx.fillStyle = '#a8a29e' // stone-400
+      ctx.fillText(item.label, currentX + boxSize + 8, legendItemY)
+
+      currentX += ctx.measureText(item.label).width + boxSize + 35
+    })
+
+    // Statistics - right aligned
+    const statsX = canvasWidth - 20
+    ctx.textAlign = 'right'
+
+    // Tiles opened
+    ctx.fillStyle = '#fafaf9' // stone-50
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif'
+    ctx.fillText(
+      `${revealedCount.toLocaleString()} tiles opened`,
+      statsX,
+      legendY + 5,
+    )
+
+    // Completion percentage
+    const completionPercent = ((finishedCount / totalSectors) * 100).toFixed(2)
+    ctx.fillStyle = '#a8a29e' // stone-400
+    ctx.font = '14px system-ui, -apple-system, sans-serif'
+    ctx.fillText(
+      `${finishedCount.toLocaleString()} / ${totalSectors.toLocaleString()} sectors (${completionPercent}% complete)`,
+      statsX,
+      legendY + 30,
+    )
+
+    // In progress count
+    ctx.fillText(
+      `${inProgressCount.toLocaleString()} sectors in progress`,
+      statsX,
+      legendY + 50,
+    )
+
+    // Map coordinates info
+    ctx.fillStyle = '#78716c' // stone-500
+    ctx.font = '12px system-ui, -apple-system, sans-serif'
+    ctx.fillText(
+      `Map: sectors (${minSectorX}, ${minSectorY}) to (${minSectorX + EXPORT_SECTOR_SIZE - 1}, ${minSectorY + EXPORT_SECTOR_SIZE - 1})`,
+      statsX,
+      legendY + 75,
+    )
+
+    setExportProgress(100)
 
     // Convert to PNG and download
     canvas.toBlob((blob) => {
@@ -476,7 +572,7 @@ export function MinesweeperGame({
       URL.revokeObjectURL(url)
       setExportProgress(null)
     }, 'image/png')
-  }, [getSectorState, exportProgress])
+  }, [getSectorState, exportProgress, revealedCount])
 
   // Check if at minimum zoom (10%)
   const isAtMinZoom = zoom <= 0.1
