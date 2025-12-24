@@ -14,14 +14,26 @@ import {
   type SectorState,
   type InitialSaveData,
 } from './useInfiniteGrid'
-import { Heart, MapPin } from 'lucide-react'
+import { Heart, MapPin, CloudOff, Cloud } from 'lucide-react'
 import { useServerFn } from '@tanstack/react-start'
 import {
   saveGameFn,
   deleteGameSaveFn,
   saveUserPreferencesFn,
+  checkSaveConflictFn,
+  forceSaveGameFn,
 } from '@/server/functions/minesweeper'
 import { useIsMobile } from '@/hooks/use-mobile'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const BASE_CELL_SIZE = 32
 const MIN_ZOOM = 0.1
@@ -112,6 +124,23 @@ export function MinesweeperGame({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [showFlash, setShowFlash] = useState(false)
   const [isSavingForNavigation, setIsSavingForNavigation] = useState(false)
+
+  // Save conflict state
+  const [showConflictDialog, setShowConflictDialog] = useState(false)
+  const [conflictInfo, setConflictInfo] = useState<{
+    serverSave: {
+      health: number | null
+      tilesOpened: number
+      savedAt: string
+    }
+    localSave: {
+      health: number
+      tilesOpened: number
+    }
+  } | null>(null)
+  const lastKnownSaveTimeRef = useRef<string | null>(
+    initialSave?.updatedAt ?? null,
+  )
   const containerRef = useRef<HTMLDivElement>(null)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const preferencesSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -128,6 +157,8 @@ export function MinesweeperGame({
   const saveGame = useServerFn(saveGameFn)
   const deleteGameSave = useServerFn(deleteGameSaveFn)
   const savePreferences = useServerFn(saveUserPreferencesFn)
+  const checkSaveConflict = useServerFn(checkSaveConflictFn)
+  const forceSaveGame = useServerFn(forceSaveGameFn)
 
   const {
     getCellState,
@@ -214,8 +245,27 @@ export function MinesweeperGame({
     setSaveError(null)
 
     try {
+      // Check for conflicts first
+      const conflictResult = await checkSaveConflict({
+        data: { lastKnownSaveTime: lastKnownSaveTimeRef.current },
+      })
+
+      if (conflictResult.hasConflict && conflictResult.serverSave) {
+        // There's a newer save on the server - show conflict dialog
+        setConflictInfo({
+          serverSave: conflictResult.serverSave,
+          localSave: {
+            health: lives,
+            tilesOpened: revealedCount,
+          },
+        })
+        setShowConflictDialog(true)
+        setIsSaving(false)
+        return false // Don't save yet, wait for user decision
+      }
+
       const state = getSerializableState()
-      await saveGame({
+      const result = await saveGame({
         data: {
           ...state,
           viewportOffsetX: offset.x,
@@ -223,6 +273,12 @@ export function MinesweeperGame({
           zoomLevel: zoom,
         },
       })
+
+      // Update last known save time
+      if (result.updatedAt) {
+        lastKnownSaveTimeRef.current = result.updatedAt
+      }
+
       markAsSaved()
       return true
     } catch (error) {
@@ -232,7 +288,59 @@ export function MinesweeperGame({
     } finally {
       setIsSaving(false)
     }
-  }, [getSerializableState, saveGame, markAsSaved, offset, zoom, isSaving])
+  }, [
+    getSerializableState,
+    saveGame,
+    markAsSaved,
+    offset,
+    zoom,
+    isSaving,
+    checkSaveConflict,
+    lives,
+    revealedCount,
+  ])
+
+  // Handle conflict resolution - use server save
+  const handleUseServerSave = useCallback(async () => {
+    setShowConflictDialog(false)
+    setConflictInfo(null)
+
+    // Reload the page to get the server save
+    window.location.reload()
+  }, [])
+
+  // Handle conflict resolution - override with local save
+  const handleOverrideServerSave = useCallback(async () => {
+    setShowConflictDialog(false)
+    setConflictInfo(null)
+    setIsSaving(true)
+    setSaveError(null)
+
+    try {
+      const state = getSerializableState()
+      const result = await forceSaveGame({
+        data: {
+          ...state,
+          viewportOffsetX: offset.x,
+          viewportOffsetY: offset.y,
+          zoomLevel: zoom,
+          forceOverride: true,
+        },
+      })
+
+      // Update last known save time
+      if (result.updatedAt) {
+        lastKnownSaveTimeRef.current = result.updatedAt
+      }
+
+      markAsSaved()
+    } catch (error) {
+      console.error('Failed to force save game:', error)
+      setSaveError('Failed to save')
+    } finally {
+      setIsSaving(false)
+    }
+  }, [getSerializableState, forceSaveGame, markAsSaved, offset, zoom])
 
   // Auto-save effect - triggers 3 seconds after last change
   useEffect(() => {
@@ -1136,6 +1244,116 @@ export function MinesweeperGame({
           />
         )}
       </div>
+
+      {/* Save Conflict Dialog */}
+      <AlertDialog
+        open={showConflictDialog}
+        onOpenChange={setShowConflictDialog}
+      >
+        <AlertDialogContent className="bg-stone-900 border-stone-700 max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-stone-100 flex items-center gap-2">
+              <CloudOff className="text-amber-500" size={20} />
+              Save Conflict Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-stone-400">
+              A newer save was found on the server. This can happen when playing
+              on multiple devices. Choose which save to keep:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {conflictInfo && (
+            <div className="grid grid-cols-2 gap-4 my-4">
+              {/* Server Save */}
+              <div className="bg-stone-800 rounded-lg p-4 border border-stone-700">
+                <div className="flex items-center gap-2 mb-3">
+                  <Cloud className="text-blue-400" size={16} />
+                  <span className="text-stone-300 font-medium text-sm">
+                    Server Save
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Heart
+                          key={i}
+                          size={14}
+                          className={
+                            i < (conflictInfo.serverSave.health ?? 0)
+                              ? 'text-red-500 fill-red-500'
+                              : 'text-stone-600'
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-stone-200 text-sm">
+                    {conflictInfo.serverSave.tilesOpened.toLocaleString()} tiles
+                  </p>
+                  <p className="text-stone-500 text-xs">
+                    {new Date(conflictInfo.serverSave.savedAt).toLocaleString(
+                      undefined,
+                      {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      },
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Local Save */}
+              <div className="bg-stone-800 rounded-lg p-4 border border-amber-700/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-amber-400 text-sm">📱</span>
+                  <span className="text-stone-300 font-medium text-sm">
+                    This Device
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Heart
+                          key={i}
+                          size={14}
+                          className={
+                            i < conflictInfo.localSave.health
+                              ? 'text-red-500 fill-red-500'
+                              : 'text-stone-600'
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-stone-200 text-sm">
+                    {conflictInfo.localSave.tilesOpened.toLocaleString()} tiles
+                  </p>
+                  <p className="text-stone-500 text-xs">Current session</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel
+              onClick={handleUseServerSave}
+              className="bg-stone-800 border-stone-600 text-stone-200 hover:bg-stone-700 hover:text-stone-100"
+            >
+              Use Server Save
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleOverrideServerSave}
+              className="bg-amber-600 text-white hover:bg-amber-700"
+            >
+              Keep This Device
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

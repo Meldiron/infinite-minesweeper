@@ -121,6 +121,7 @@ export type InitialSaveData = {
   seed?: number | null
   health?: number | null
   healthRegenTimestamp?: string | null
+  updatedAt?: string | null
 } | null
 
 export function useInfiniteGrid(
