@@ -458,7 +458,6 @@ export const CanvasRenderer = memo(function CanvasRenderer({
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       if (!isMobile || gameState !== 'playing') return
-      if (isZoomedOut) return
 
       // If pinching or multiple touches, don't start long press
       if (isPinchingRef.current || e.touches.length > 1) {
@@ -474,10 +473,14 @@ export const CanvasRenderer = memo(function CanvasRenderer({
       const rect = canvasRef.current?.getBoundingClientRect()
       if (!rect) return
 
+      // Always record touch start position for tap detection (including sector taps when zoomed out)
       touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
       isLongPressRef.current = false
       hasMovedRef.current = false
       wasPinchingRef.current = false
+
+      // Skip long press timer when zoomed out (sector view doesn't use long press)
+      if (isZoomedOut) return
 
       const screenX = touch.clientX - rect.left
       const screenY = touch.clientY - rect.top
