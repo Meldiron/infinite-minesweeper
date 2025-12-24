@@ -149,6 +149,11 @@ export function MinesweeperGame({
   const triggerFlash = useCallback(() => {
     setShowFlash(true)
     setTimeout(() => setShowFlash(false), 400)
+
+    // Trigger haptic vibration on mobile devices
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(50) // Short 50ms vibration
+    }
   }, [])
 
   // Prevent body scroll on mobile when game is mounted
