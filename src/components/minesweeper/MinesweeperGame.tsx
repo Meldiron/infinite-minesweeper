@@ -681,8 +681,8 @@ export function MinesweeperGame({
         // Calculate scale with reduced sensitivity for smoother zoom
         const rawScale = distance / touchStartRef.current.distance
 
-        // Dampen the scale change for smoother zoom (0.5 = 50% of the raw scale change)
-        const dampenedScale = 1 + (rawScale - 1) * 0.5
+        // Apply full scale change (1.0 = 100% of the raw scale change)
+        const dampenedScale = 1 + (rawScale - 1) * 1.0
 
         const initialZoom = touchStartRef.current.initialZoom ?? zoom
         const newZoom = Math.max(
