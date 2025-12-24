@@ -58,6 +58,7 @@ type GameControlsProps = {
     error: string | null
     onForceSave: () => void
   }
+  isSavingForNavigation?: boolean
 }
 
 function formatTime(ms: number): string {
@@ -83,6 +84,7 @@ export function GameControls({
   isAtMinZoom,
   exportProgress,
   saveStatus,
+  isSavingForNavigation,
 }: GameControlsProps) {
   const isExporting = exportProgress !== null && exportProgress !== undefined
 
@@ -193,10 +195,15 @@ export function GameControls({
             variant="outline"
             size="icon"
             onClick={onLeaderboard}
+            disabled={isSavingForNavigation}
             className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0 hover:bg-amber-900/80 hover:text-amber-200"
             title="Leaderboard"
           >
-            <Trophy size={18} />
+            {isSavingForNavigation ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Trophy size={18} />
+            )}
           </Button>
         </div>
 
@@ -275,10 +282,15 @@ export function GameControls({
             variant="outline"
             size="icon"
             onClick={onSignOut}
+            disabled={isSavingForNavigation}
             className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0 hover:bg-red-900/80 hover:text-red-200"
             title="Sign out"
           >
-            <LogOut size={18} />
+            {isSavingForNavigation ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <LogOut size={18} />
+            )}
           </Button>
         </div>
       </div>

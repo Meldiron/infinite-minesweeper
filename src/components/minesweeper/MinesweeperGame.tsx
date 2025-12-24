@@ -110,6 +110,7 @@ export function MinesweeperGame({
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [showFlash, setShowFlash] = useState(false)
+  const [isSavingForNavigation, setIsSavingForNavigation] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const preferencesSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -204,9 +205,9 @@ export function MinesweeperGame({
     }
   }, [])
 
-  // Perform save operation
-  const performSave = useCallback(async () => {
-    if (isSaving) return
+  // Perform save operation - returns true if successful
+  const performSave = useCallback(async (): Promise<boolean> => {
+    if (isSaving) return false
 
     setIsSaving(true)
     setSaveError(null)
@@ -222,9 +223,11 @@ export function MinesweeperGame({
         },
       })
       markAsSaved()
+      return true
     } catch (error) {
       console.error('Failed to save game:', error)
       setSaveError('Failed to save')
+      return false
     } finally {
       setIsSaving(false)
     }
@@ -806,15 +809,49 @@ export function MinesweeperGame({
     window.location.reload()
   }, [resetGame, deleteGameSave])
 
-  // Sign out handler
-  const handleSignOut = useCallback(() => {
-    navigate({ to: '/sign-out' })
-  }, [navigate])
+  // Sign out handler - save game first
+  const handleSignOut = useCallback(async () => {
+    if (isSavingForNavigation) return
 
-  // Leaderboard handler
-  const handleLeaderboard = useCallback(() => {
-    navigate({ to: '/leaderboard' })
-  }, [navigate])
+    setIsSavingForNavigation(true)
+    try {
+      // Only save if there are unsaved changes
+      if (isDirty) {
+        const saved = await performSave()
+        if (!saved) {
+          // Save failed, stay on page
+          setIsSavingForNavigation(false)
+          return
+        }
+      }
+      navigate({ to: '/sign-out' })
+    } catch (error) {
+      console.error('Failed to save before sign out:', error)
+      setIsSavingForNavigation(false)
+    }
+  }, [navigate, performSave, isDirty, isSavingForNavigation])
+
+  // Leaderboard handler - save game first
+  const handleLeaderboard = useCallback(async () => {
+    if (isSavingForNavigation) return
+
+    setIsSavingForNavigation(true)
+    try {
+      // Only save if there are unsaved changes
+      if (isDirty) {
+        const saved = await performSave()
+        if (!saved) {
+          // Save failed, stay on page
+          setIsSavingForNavigation(false)
+          return
+        }
+      }
+      navigate({ to: '/leaderboard' })
+    } catch (error) {
+      console.error('Failed to save before leaderboard:', error)
+      setIsSavingForNavigation(false)
+    }
+  }, [navigate, performSave, isDirty, isSavingForNavigation])
 
   const isWaiting = gameState === 'waiting'
 
@@ -869,6 +906,7 @@ export function MinesweeperGame({
           error: saveError,
           onForceSave: performSave,
         }}
+        isSavingForNavigation={isSavingForNavigation}
       />
 
       <GameInstructions
