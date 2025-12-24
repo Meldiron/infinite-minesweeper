@@ -197,6 +197,7 @@ export const saveGameFn = createServerFn({ method: 'POST' })
         Query.limit(1),
       ])
 
+      const tilesOpened = revealedCount
       if (existingStats.rows.length > 0) {
         // Update tilesOpened count
         await db.userStats.update(existingStats.rows[0].$id, {
@@ -230,6 +231,7 @@ export const saveGameFn = createServerFn({ method: 'POST' })
           success: true,
           saveId: updated.$id,
           updatedAt: updated.$updatedAt,
+          tilesOpened,
         }
       } else {
         // Create new save
@@ -251,6 +253,7 @@ export const saveGameFn = createServerFn({ method: 'POST' })
           success: true,
           saveId: created.$id,
           updatedAt: created.$updatedAt,
+          tilesOpened,
         }
       }
     } catch (error) {
