@@ -297,6 +297,21 @@ export function MinesweeperGame({
     return () => window.removeEventListener('resize', updateSize)
   }, [])
 
+  // Warn user before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault()
+        // Modern browsers ignore custom messages, but we still need to set returnValue
+        e.returnValue = ''
+        return ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isDirty])
+
   const cellSize = BASE_CELL_SIZE * zoom
   const sectorPixelSize = SECTOR_SIZE * cellSize
   const isZoomedOut = zoom <= SECTOR_VIEW_THRESHOLD
