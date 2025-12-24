@@ -285,7 +285,7 @@ export function GameControls({
 
       {/* Second row - Save status on mobile */}
       {saveStatus && (
-        <div className="flex justify-end md:hidden pointer-events-auto">
+        <div className="flex justify-start md:hidden pointer-events-auto">
           {renderSaveStatus()}
         </div>
       )}
