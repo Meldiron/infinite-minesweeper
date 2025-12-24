@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Flag,
   Grid3X3,
-  Move,
+  Home,
   Unlock,
   LogOut,
   Trophy,
@@ -175,7 +175,7 @@ export function GameControls({
             className="h-10 w-10 bg-stone-900/95 text-stone-100 backdrop-blur-sm shadow-lg border-0"
             title="Reset view"
           >
-            <Move size={18} />
+            <Home size={18} />
           </Button>
 
           <AlertDialog>
