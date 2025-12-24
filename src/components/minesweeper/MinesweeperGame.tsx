@@ -28,7 +28,8 @@ const MIN_ZOOM = 0.1
 const MAX_ZOOM = 2
 const ZOOM_STEP = 0.1
 const SECTOR_VIEW_THRESHOLD = 0.5 // Switch to sector view at 50% zoom or less
-const EXPORT_MAX_SIZE = 100 // Maximum export size in pixels (100x100 sectors from center)
+const EXPORT_SECTOR_SIZE = 100 // Number of sectors to export (100x100 sectors from center)
+const EXPORT_PIXEL_SCALE = 10 // Scale factor for each sector (10x10 pixels per sector)
 const EXPORT_CHUNK_SIZE = 50 // Process 50 rows at a time to prevent freezing
 const AUTO_SAVE_DELAY = 1000 // 1 second of inactivity before auto-save
 const PREFERENCES_SAVE_DELAY = 1000 // 1 second delay for preferences
@@ -384,7 +385,7 @@ export function MinesweeperGame({
     return { x: sectorX, y: sectorY }
   }, [containerSize, offset, cellSize])
 
-  // Export board as PNG (1 pixel per sector, max 1000x1000, centered at 0,0)
+  // Export board as PNG (100x100 sectors, scaled to 1000x1000 pixels, centered at 0,0)
   // Uses chunked processing to prevent browser freezing
   const handleExportPNG = useCallback(async () => {
     // Prevent multiple exports at once
@@ -392,9 +393,10 @@ export function MinesweeperGame({
 
     setExportProgress(0)
 
+    const canvasSize = EXPORT_SECTOR_SIZE * EXPORT_PIXEL_SCALE // 1000x1000 pixels
     const canvas = document.createElement('canvas')
-    canvas.width = EXPORT_MAX_SIZE
-    canvas.height = EXPORT_MAX_SIZE
+    canvas.width = canvasSize
+    canvas.height = canvasSize
     const ctx = canvas.getContext('2d')
     if (!ctx) {
       setExportProgress(null)
@@ -403,10 +405,10 @@ export function MinesweeperGame({
 
     // Fill with untouched color (dark gray)
     ctx.fillStyle = '#44403c' // stone-700
-    ctx.fillRect(0, 0, EXPORT_MAX_SIZE, EXPORT_MAX_SIZE)
+    ctx.fillRect(0, 0, canvasSize, canvasSize)
 
     // Calculate sector range (centered at 0,0)
-    const halfSize = Math.floor(EXPORT_MAX_SIZE / 2)
+    const halfSize = Math.floor(EXPORT_SECTOR_SIZE / 2)
     const minSectorX = -halfSize
     const minSectorY = -halfSize
 
@@ -418,7 +420,7 @@ export function MinesweeperGame({
     }
 
     // Process in chunks to prevent freezing
-    const totalRows = EXPORT_MAX_SIZE
+    const totalRows = EXPORT_SECTOR_SIZE
     let currentRow = 0
 
     const processChunk = (): Promise<void> => {
@@ -426,7 +428,7 @@ export function MinesweeperGame({
         const endRow = Math.min(currentRow + EXPORT_CHUNK_SIZE, totalRows)
 
         for (let py = currentRow; py < endRow; py++) {
-          for (let px = 0; px < EXPORT_MAX_SIZE; px++) {
+          for (let px = 0; px < EXPORT_SECTOR_SIZE; px++) {
             const sectorX = minSectorX + px
             const sectorY = minSectorY + py
             const state = getSectorState(sectorX, sectorY)
@@ -434,7 +436,13 @@ export function MinesweeperGame({
             // Only draw if not untouched (untouched is already the background)
             if (state !== 'untouched') {
               ctx.fillStyle = sectorColors[state]
-              ctx.fillRect(px, py, 1, 1)
+              // Draw scaled pixel (10x10 block for each sector)
+              ctx.fillRect(
+                px * EXPORT_PIXEL_SCALE,
+                py * EXPORT_PIXEL_SCALE,
+                EXPORT_PIXEL_SCALE,
+                EXPORT_PIXEL_SCALE,
+              )
             }
           }
         }
