@@ -33,6 +33,7 @@ const EXPORT_CHUNK_SIZE = 50 // Process 50 rows at a time to prevent freezing
 const AUTO_SAVE_DELAY = 3000 // 3 seconds of inactivity before auto-save
 const PREFERENCES_SAVE_DELAY = 1000 // 1 second delay for preferences
 const DRAG_THRESHOLD = 5 // Pixels moved before considering it a drag
+const ANIMATION_DURATION = 300 // Duration for zoom/pan animations in ms
 
 // Detect macOS for trackpad-friendly zoom behavior
 const isMacOS =
@@ -120,6 +121,7 @@ export function MinesweeperGame({
   const hasDraggedRef = useRef(false)
   const dragButtonRef = useRef<number | null>(null)
   const isPinchingRef = useRef<boolean>(false)
+  const animationFrameRef = useRef<number | null>(null)
 
   const saveGame = useServerFn(saveGameFn)
   const deleteGameSave = useServerFn(deleteGameSaveFn)
@@ -324,6 +326,15 @@ export function MinesweeperGame({
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [isDirty])
 
+  // Cleanup animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [])
+
   const cellSize = BASE_CELL_SIZE * zoom
   const isZoomedOut = zoom <= SECTOR_VIEW_THRESHOLD
 
@@ -479,6 +490,12 @@ export function MinesweeperGame({
       // Don't allow click if we just dragged
       if (hasDraggedRef.current) return
 
+      // Cancel any ongoing animation
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = null
+      }
+
       const targetZoom = 1.2 // 120%
       const newCellSize = BASE_CELL_SIZE * targetZoom
 
@@ -487,13 +504,48 @@ export function MinesweeperGame({
       const sectorCenterY = (sectorY + 0.5) * SECTOR_SIZE * newCellSize
 
       // Calculate offset to center the sector on screen
-      const newOffsetX = containerSize.width / 2 - sectorCenterX
-      const newOffsetY = containerSize.height / 2 - sectorCenterY
+      const targetOffsetX = containerSize.width / 2 - sectorCenterX
+      const targetOffsetY = containerSize.height / 2 - sectorCenterY
 
-      setZoom(targetZoom)
-      setOffset({ x: newOffsetX, y: newOffsetY })
+      // Store starting values
+      const startZoom = zoom
+      const startOffsetX = offset.x
+      const startOffsetY = offset.y
+      const startTime = performance.now()
+
+      // Easing function: easeOutCubic for smooth deceleration
+      const easeOutCubic = (t: number): number => {
+        return 1 - Math.pow(1 - t, 3)
+      }
+
+      // Animation loop
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / ANIMATION_DURATION, 1)
+        const easedProgress = easeOutCubic(progress)
+
+        // Interpolate values
+        const currentZoom = startZoom + (targetZoom - startZoom) * easedProgress
+        const currentOffsetX =
+          startOffsetX + (targetOffsetX - startOffsetX) * easedProgress
+        const currentOffsetY =
+          startOffsetY + (targetOffsetY - startOffsetY) * easedProgress
+
+        setZoom(currentZoom)
+        setOffset({ x: currentOffsetX, y: currentOffsetY })
+
+        // Continue animation if not complete
+        if (progress < 1) {
+          animationFrameRef.current = requestAnimationFrame(animate)
+        } else {
+          animationFrameRef.current = null
+        }
+      }
+
+      // Start animation
+      animationFrameRef.current = requestAnimationFrame(animate)
     },
-    [containerSize],
+    [containerSize, zoom, offset],
   )
 
   // Mouse wheel zoom
