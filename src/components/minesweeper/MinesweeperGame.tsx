@@ -529,7 +529,7 @@ export function MinesweeperGame({
     setExportProgress(0)
 
     const mapSize = EXPORT_SECTOR_SIZE * EXPORT_PIXEL_SCALE // 1000x1000 pixels for map
-    const legendHeight = 160 // Height for legend panel
+    const legendHeight = 220 // Height for gamified legend panel
     const canvasWidth = mapSize
     const canvasHeight = mapSize + legendHeight
 
@@ -615,16 +615,40 @@ export function MinesweeperGame({
       await processChunk()
     }
 
-    // Draw legend panel
-    const legendY = mapSize + 15
+    // === GAMIFIED LEGEND PANEL ===
+    const legendY = mapSize + 20
+    const completionPercent = (finishedCount / totalSectors) * 100
 
-    // Branding - "Infinite Minesweeper"
+    // Helper function to draw rounded rectangle
+    const drawRoundedRect = (
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+      r: number,
+    ) => {
+      ctx.beginPath()
+      ctx.moveTo(x + r, y)
+      ctx.lineTo(x + w - r, y)
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+      ctx.lineTo(x + w, y + h - r)
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+      ctx.lineTo(x + r, y + h)
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+      ctx.lineTo(x, y + r)
+      ctx.quadraticCurveTo(x, y, x + r, y)
+      ctx.closePath()
+    }
+
+    // === LEFT SIDE: Branding & Progress ===
+
+    // Title with emoji
     ctx.fillStyle = '#fafaf9' // stone-50
-    ctx.font = 'bold 32px system-ui, -apple-system, sans-serif'
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('Infinite Minesweeper', 20, legendY + 25)
+    ctx.fillText('💣 Infinite Minesweeper', 24, legendY + 28)
 
-    // Current date and time
+    // Date/time subtitle
     const now = new Date()
     const dateTimeStr = now.toLocaleString(undefined, {
       year: 'numeric',
@@ -634,72 +658,184 @@ export function MinesweeperGame({
       minute: '2-digit',
     })
     ctx.fillStyle = '#78716c' // stone-500
-    ctx.font = '12px system-ui, -apple-system, sans-serif'
-    ctx.fillText(dateTimeStr, 20, legendY + 45)
+    ctx.font = '13px system-ui, -apple-system, sans-serif'
+    ctx.fillText(dateTimeStr, 24, legendY + 50)
 
-    // Color legend
-    const legendStartX = 20
-    const legendItemY = legendY + 75
-    const boxSize = 16
+    // Progress bar background
+    const progressBarX = 24
+    const progressBarY = legendY + 70
+    const progressBarWidth = 320
+    const progressBarHeight = 24
+    const progressBarRadius = 12
+
+    ctx.fillStyle = '#292524' // stone-800
+    drawRoundedRect(
+      progressBarX,
+      progressBarY,
+      progressBarWidth,
+      progressBarHeight,
+      progressBarRadius,
+    )
+    ctx.fill()
+
+    // Progress bar fill (gradient)
+    const progressFillWidth = Math.max(
+      progressBarRadius * 2,
+      (completionPercent / 100) * progressBarWidth,
+    )
+    const gradient = ctx.createLinearGradient(
+      progressBarX,
+      0,
+      progressBarX + progressFillWidth,
+      0,
+    )
+    gradient.addColorStop(0, '#22c55e') // green-500
+    gradient.addColorStop(1, '#16a34a') // green-600
+    ctx.fillStyle = gradient
+    drawRoundedRect(
+      progressBarX,
+      progressBarY,
+      progressFillWidth,
+      progressBarHeight,
+      progressBarRadius,
+    )
+    ctx.fill()
+
+    // Progress percentage text on bar
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(
+      `${completionPercent.toFixed(2)}%`,
+      progressBarX + progressBarWidth / 2,
+      progressBarY + 16,
+    )
+
+    // Color legend with icons
+    const legendItemY = legendY + 120
     const legendItems = [
-      { color: '#44403c', label: 'Untouched' },
-      { color: '#b45309', label: 'In Progress' },
-      { color: '#15803d', label: 'Completed' },
+      { color: '#44403c', label: 'Unexplored', icon: '🔲' },
+      { color: '#b45309', label: 'In Progress', icon: '🔶' },
+      { color: '#15803d', label: 'Completed', icon: '✅' },
     ]
 
-    ctx.font = '14px system-ui, -apple-system, sans-serif'
+    ctx.font = '13px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
-    let currentX = legendStartX
+    let currentX = 24
 
     legendItems.forEach((item) => {
+      // Draw icon
+      ctx.fillText(item.icon, currentX, legendItemY)
+
       // Draw color box
       ctx.fillStyle = item.color
-      ctx.fillRect(currentX, legendItemY - boxSize + 4, boxSize, boxSize)
+      ctx.fillRect(currentX + 22, legendItemY - 12, 14, 14)
 
       // Draw label
       ctx.fillStyle = '#a8a29e' // stone-400
-      ctx.fillText(item.label, currentX + boxSize + 8, legendItemY)
+      ctx.fillText(item.label, currentX + 42, legendItemY)
 
-      currentX += ctx.measureText(item.label).width + boxSize + 35
+      currentX += ctx.measureText(item.label).width + 75
     })
 
-    // Statistics - right aligned
-    const statsX = canvasWidth - 20
-    ctx.textAlign = 'right'
+    // === RIGHT SIDE: Gamified Stats ===
+    const statsX = canvasWidth - 24
 
-    // Tiles opened
+    // XP-style tiles counter with badge
+    const tilesBoxWidth = 200
+    const tilesBoxHeight = 70
+    const tilesBoxX = statsX - tilesBoxWidth
+    const tilesBoxY = legendY + 10
+
+    // Badge background
+    ctx.fillStyle = '#292524' // stone-800
+    drawRoundedRect(tilesBoxX, tilesBoxY, tilesBoxWidth, tilesBoxHeight, 12)
+    ctx.fill()
+
+    // Badge accent line
+    ctx.fillStyle = '#f59e0b' // amber-500
+    drawRoundedRect(tilesBoxX, tilesBoxY, 6, tilesBoxHeight, 3)
+    ctx.fill()
+
+    // XP icon and label
+    ctx.fillStyle = '#fbbf24' // amber-400
+    ctx.font = 'bold 13px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('⚡ TILES CLEARED', tilesBoxX + 16, tilesBoxY + 22)
+
+    // Big number
+    ctx.fillStyle = '#fafaf9' // stone-50
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
+    ctx.fillText(revealedCount.toLocaleString(), tilesBoxX + 16, tilesBoxY + 54)
+
+    // Sectors completed badge
+    const sectorsBoxY = tilesBoxY + tilesBoxHeight + 12
+    const sectorsBoxHeight = 50
+
+    ctx.fillStyle = '#292524' // stone-800
+    drawRoundedRect(tilesBoxX, sectorsBoxY, tilesBoxWidth, sectorsBoxHeight, 12)
+    ctx.fill()
+
+    // Badge accent line (green for completed)
+    ctx.fillStyle = '#22c55e' // green-500
+    drawRoundedRect(tilesBoxX, sectorsBoxY, 6, sectorsBoxHeight, 3)
+    ctx.fill()
+
+    // Sectors icon and count
+    ctx.fillStyle = '#4ade80' // green-400
+    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('🏆 SECTORS', tilesBoxX + 16, sectorsBoxY + 20)
+
     ctx.fillStyle = '#fafaf9' // stone-50
     ctx.font = 'bold 18px system-ui, -apple-system, sans-serif'
     ctx.fillText(
-      `${revealedCount.toLocaleString()} tiles opened`,
-      statsX,
-      legendY + 25,
+      `${finishedCount.toLocaleString()} completed`,
+      tilesBoxX + 16,
+      sectorsBoxY + 40,
     )
 
-    // Completion percentage
-    const completionPercent = ((finishedCount / totalSectors) * 100).toFixed(2)
-    ctx.fillStyle = '#a8a29e' // stone-400
-    ctx.font = '14px system-ui, -apple-system, sans-serif'
+    // In-progress mini badge
+    const inProgressBoxX = tilesBoxX - 120
+    const inProgressBoxY = sectorsBoxY
+    const inProgressBoxWidth = 110
+    const inProgressBoxHeight = 50
+
+    ctx.fillStyle = '#292524' // stone-800
+    drawRoundedRect(
+      inProgressBoxX,
+      inProgressBoxY,
+      inProgressBoxWidth,
+      inProgressBoxHeight,
+      12,
+    )
+    ctx.fill()
+
+    // Amber accent
+    ctx.fillStyle = '#f59e0b' // amber-500
+    drawRoundedRect(inProgressBoxX, inProgressBoxY, 6, inProgressBoxHeight, 3)
+    ctx.fill()
+
+    ctx.fillStyle = '#fbbf24' // amber-400
+    ctx.font = 'bold 11px system-ui, -apple-system, sans-serif'
+    ctx.fillText('🔥 ACTIVE', inProgressBoxX + 14, inProgressBoxY + 20)
+
+    ctx.fillStyle = '#fafaf9' // stone-50
+    ctx.font = 'bold 16px system-ui, -apple-system, sans-serif'
     ctx.fillText(
-      `${finishedCount.toLocaleString()} / ${totalSectors.toLocaleString()} sectors (${completionPercent}% complete)`,
-      statsX,
-      legendY + 50,
+      inProgressCount.toLocaleString(),
+      inProgressBoxX + 14,
+      inProgressBoxY + 40,
     )
 
-    // In progress count
+    // Map coordinates footer
+    ctx.fillStyle = '#57534e' // stone-600
+    ctx.font = '11px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'left'
     ctx.fillText(
-      `${inProgressCount.toLocaleString()} sectors in progress`,
-      statsX,
-      legendY + 70,
-    )
-
-    // Map coordinates info
-    ctx.fillStyle = '#78716c' // stone-500
-    ctx.font = '12px system-ui, -apple-system, sans-serif'
-    ctx.fillText(
-      `Map: sectors (${minSectorX}, ${minSectorY}) to (${minSectorX + EXPORT_SECTOR_SIZE - 1}, ${minSectorY + EXPORT_SECTOR_SIZE - 1})`,
-      statsX,
-      legendY + 90,
+      `Map region: (${minSectorX}, ${minSectorY}) to (${minSectorX + EXPORT_SECTOR_SIZE - 1}, ${minSectorY + EXPORT_SECTOR_SIZE - 1})`,
+      24,
+      legendY + 195,
     )
 
     setExportProgress(100)
