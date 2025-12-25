@@ -7,6 +7,7 @@ export {
   GameInstructions,
   SaveIndicator,
   InteractionModeToggle,
+  MobileExportButton,
 } from './GameControls'
 export { useInfiniteGrid, SECTOR_SIZE } from './useInfiniteGrid'
 export type {

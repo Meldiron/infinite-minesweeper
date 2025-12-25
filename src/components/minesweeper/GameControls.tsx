@@ -59,6 +59,7 @@ type GameControlsProps = {
     onForceSave: () => void
   }
   isSavingForNavigation?: boolean
+  isMobile?: boolean
 }
 
 function formatTime(ms: number): string {
@@ -85,6 +86,7 @@ export function GameControls({
   exportProgress,
   saveStatus,
   isSavingForNavigation,
+  isMobile,
 }: GameControlsProps) {
   const isExporting = exportProgress !== null && exportProgress !== undefined
 
@@ -302,8 +304,8 @@ export function GameControls({
         </div>
       )}
 
-      {/* Third row - Export button (only at min zoom) */}
-      {(isAtMinZoom || isExporting) && onExportPNG && (
+      {/* Third row - Export button (only at min zoom) - Desktop only */}
+      {!isMobile && (isAtMinZoom || isExporting) && onExportPNG && (
         <div className="flex justify-end">
           <div className="bg-stone-900/95 backdrop-blur-sm rounded-lg shadow-lg pointer-events-auto overflow-hidden">
             {isExporting ? (
@@ -497,7 +499,7 @@ export function InteractionModeToggle({
 }) {
   return (
     <div
-      className="absolute left-1/2 -translate-x-1/2 z-10 pointer-events-auto"
+      className="absolute left-1/2 -translate-x-1/2 z-10 pointer-events-auto md:hidden"
       style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="bg-stone-900/95 backdrop-blur-sm rounded-full shadow-lg px-3 py-2 flex items-center gap-2">
@@ -514,6 +516,58 @@ export function InteractionModeToggle({
           size={16}
           className={mode === 'default' ? 'text-amber-400' : 'text-stone-500'}
         />
+      </div>
+    </div>
+  )
+}
+
+// Mobile export button component - positioned above the interaction mode toggle
+export function MobileExportButton({
+  onExportPNG,
+  isAtMinZoom,
+  exportProgress,
+}: {
+  onExportPNG?: () => void
+  isAtMinZoom?: boolean
+  exportProgress?: number | null
+}) {
+  const isExporting = exportProgress !== null && exportProgress !== undefined
+
+  if (!onExportPNG || (!isAtMinZoom && !isExporting)) {
+    return null
+  }
+
+  return (
+    <div
+      className="absolute left-1/2 -translate-x-1/2 z-10 pointer-events-auto md:hidden"
+      style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}
+    >
+      <div className="bg-stone-900/95 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+        {isExporting ? (
+          <div className="px-4 py-2 flex items-center gap-3 min-w-[200px]">
+            <Loader2 size={16} className="text-amber-500 animate-spin" />
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-stone-100 text-sm">Exporting...</span>
+                <span className="text-stone-400 text-xs font-mono">
+                  {exportProgress}%
+                </span>
+              </div>
+              <Progress
+                value={exportProgress}
+                className="h-1.5 bg-stone-700 [&_[data-slot=progress-indicator]]:bg-amber-500"
+              />
+            </div>
+          </div>
+        ) : (
+          <Button
+            onClick={onExportPNG}
+            className="bg-transparent hover:bg-stone-800 text-stone-100 border-0 gap-2"
+          >
+            <Download size={16} />
+            Export Map as PNG
+          </Button>
+        )}
       </div>
     </div>
   )

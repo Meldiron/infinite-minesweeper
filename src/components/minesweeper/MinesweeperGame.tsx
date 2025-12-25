@@ -7,6 +7,7 @@ import {
   GameInstructions,
   SaveIndicator,
   InteractionModeToggle,
+  MobileExportButton,
 } from './GameControls'
 import {
   useInfiniteGrid,
@@ -1298,6 +1299,7 @@ export function MinesweeperGame({
           onForceSave: performSave,
         }}
         isSavingForNavigation={isSavingForNavigation}
+        isMobile={isMobile}
       />
 
       <GameInstructions
@@ -1320,6 +1322,13 @@ export function MinesweeperGame({
         onToggle={() =>
           setMobileMode((m) => (m === 'default' ? 'reverse' : 'default'))
         }
+      />
+
+      {/* Mobile export button - positioned above the interaction mode toggle */}
+      <MobileExportButton
+        onExportPNG={handleExportPNG}
+        isAtMinZoom={isAtMinZoom}
+        exportProgress={exportProgress}
       />
 
       {/* Sector position indicator - always visible */}
