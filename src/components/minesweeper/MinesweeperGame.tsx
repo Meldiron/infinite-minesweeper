@@ -764,38 +764,34 @@ export function MinesweeperGame({
 
     // --- Tiles Cleared Section ---
     const tilesY = panelY + 36
+    const panelCenterX = panelX + panelWidth / 2
 
     // Icon circle background
     ctx.fillStyle = '#fbbf24' // amber-400
-    ctx.globalAlpha = 0.15
+    ctx.globalAlpha = 0.2
     ctx.beginPath()
-    ctx.arc(panelX + 28, tilesY - 4, 14, 0, Math.PI * 2)
+    ctx.arc(panelCenterX, tilesY + 6, 8, 0, Math.PI * 2)
     ctx.fill()
     ctx.globalAlpha = 1
-
-    // Icon text (lightning bolt unicode)
-    ctx.fillStyle = '#fbbf24' // amber-400
-    ctx.font = '14px system-ui'
-    ctx.textAlign = 'center'
-    ctx.fillText('⚡', panelX + 28, tilesY)
 
     // Label
     ctx.fillStyle = '#78716c' // stone-500
     ctx.font = '10px system-ui, -apple-system, sans-serif'
-    ctx.textAlign = 'left'
-    ctx.fillText('TILES CLEARED', panelX + 50, tilesY - 8)
+    ctx.textAlign = 'center'
+    ctx.fillText('TILES CLEARED', panelCenterX, tilesY - 6)
 
     // Value
     ctx.fillStyle = '#fafaf9' // stone-50
-    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif'
-    ctx.fillText(revealedCount.toLocaleString(), panelX + 50, tilesY + 14)
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(revealedCount.toLocaleString(), panelCenterX, tilesY + 24)
 
     // Divider
     ctx.strokeStyle = '#3f3f46' // stone-700
     ctx.lineWidth = 1
     ctx.beginPath()
-    ctx.moveTo(panelX + 20, panelY + 68)
-    ctx.lineTo(panelX + panelWidth - 20, panelY + 68)
+    ctx.moveTo(panelX + 20, panelY + 72)
+    ctx.lineTo(panelX + panelWidth - 20, panelY + 72)
     ctx.stroke()
 
     // --- Sectors Completed Section ---
@@ -803,28 +799,23 @@ export function MinesweeperGame({
 
     // Icon circle background
     ctx.fillStyle = '#22c55e' // green-500
-    ctx.globalAlpha = 0.15
+    ctx.globalAlpha = 0.2
     ctx.beginPath()
-    ctx.arc(panelX + 28, sectorsY - 4, 14, 0, Math.PI * 2)
+    ctx.arc(panelCenterX, sectorsY + 6, 8, 0, Math.PI * 2)
     ctx.fill()
     ctx.globalAlpha = 1
-
-    // Icon text (trophy unicode)
-    ctx.fillStyle = '#22c55e' // green-500
-    ctx.font = '14px system-ui'
-    ctx.textAlign = 'center'
-    ctx.fillText('🏆', panelX + 28, sectorsY)
 
     // Label
     ctx.fillStyle = '#78716c' // stone-500
     ctx.font = '10px system-ui, -apple-system, sans-serif'
-    ctx.textAlign = 'left'
-    ctx.fillText('SECTORS DONE', panelX + 50, sectorsY - 8)
+    ctx.textAlign = 'center'
+    ctx.fillText('SECTORS DONE', panelCenterX, sectorsY - 6)
 
     // Value
     ctx.fillStyle = '#22c55e' // green-500
-    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif'
-    ctx.fillText(finishedCount.toLocaleString(), panelX + 50, sectorsY + 14)
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(finishedCount.toLocaleString(), panelCenterX, sectorsY + 24)
 
     // Map coordinates footer
     ctx.fillStyle = '#57534e' // stone-600
