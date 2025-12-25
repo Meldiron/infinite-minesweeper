@@ -669,58 +669,8 @@ export function MinesweeperGame({
     ctx.font = '12px system-ui, -apple-system, sans-serif'
     ctx.fillText(dateTimeStr, 24, legendY + 78)
 
-    // Progress bar background
-    const progressBarX = 24
-    const progressBarY = legendY + 100
-    const progressBarWidth = 320
-    const progressBarHeight = 20
-    const progressBarRadius = 10
-
-    ctx.fillStyle = '#292524' // stone-800
-    drawRoundedRect(
-      progressBarX,
-      progressBarY,
-      progressBarWidth,
-      progressBarHeight,
-      progressBarRadius,
-    )
-    ctx.fill()
-
-    // Progress bar fill (gradient)
-    const progressFillWidth = Math.max(
-      progressBarRadius * 2,
-      (completionPercent / 100) * progressBarWidth,
-    )
-    const gradient = ctx.createLinearGradient(
-      progressBarX,
-      0,
-      progressBarX + progressFillWidth,
-      0,
-    )
-    gradient.addColorStop(0, '#22c55e') // green-500
-    gradient.addColorStop(1, '#16a34a') // green-600
-    ctx.fillStyle = gradient
-    drawRoundedRect(
-      progressBarX,
-      progressBarY,
-      progressFillWidth,
-      progressBarHeight,
-      progressBarRadius,
-    )
-    ctx.fill()
-
-    // Progress percentage text on bar
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 11px system-ui, -apple-system, sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(
-      `${completionPercent.toFixed(2)}% explored`,
-      progressBarX + progressBarWidth / 2,
-      progressBarY + 14,
-    )
-
     // Color legend
-    const legendItemY = legendY + 145
+    const legendItemY = legendY + 110
     const legendItems = [
       { color: '#44403c', label: 'Unexplored' },
       { color: '#57534e', label: 'In Progress' },
@@ -743,6 +693,55 @@ export function MinesweeperGame({
 
       currentX += ctx.measureText(item.label).width + 45
     })
+
+    // === CENTER: Circular Progress Bar ===
+    const circleRadius = 65
+    const circleX = canvasWidth / 2 - 40 // Shifted left to make room for stats
+    const circleY = legendY + 100
+    const lineWidth = 12
+
+    // Background circle (track)
+    ctx.beginPath()
+    ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2)
+    ctx.strokeStyle = '#292524' // stone-800
+    ctx.lineWidth = lineWidth
+    ctx.stroke()
+
+    // Progress arc
+    const startAngle = -Math.PI / 2 // Start from top
+    const endAngle = startAngle + (completionPercent / 100) * Math.PI * 2
+
+    // Create gradient for progress arc
+    const arcGradient = ctx.createLinearGradient(
+      circleX - circleRadius,
+      circleY,
+      circleX + circleRadius,
+      circleY,
+    )
+    arcGradient.addColorStop(0, '#22c55e') // green-500
+    arcGradient.addColorStop(1, '#16a34a') // green-600
+
+    ctx.beginPath()
+    ctx.arc(circleX, circleY, circleRadius, startAngle, endAngle)
+    ctx.strokeStyle = arcGradient
+    ctx.lineWidth = lineWidth
+    ctx.lineCap = 'round'
+    ctx.stroke()
+
+    // Percentage text in center
+    ctx.fillStyle = '#fafaf9' // stone-50
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(`${completionPercent.toFixed(1)}%`, circleX, circleY - 8)
+
+    // "explored" label below percentage
+    ctx.fillStyle = '#78716c' // stone-500
+    ctx.font = '12px system-ui, -apple-system, sans-serif'
+    ctx.fillText('explored', circleX, circleY + 18)
+
+    // Reset text baseline
+    ctx.textBaseline = 'alphabetic'
 
     // === RIGHT SIDE: Stats Panel ===
     const panelWidth = 180
