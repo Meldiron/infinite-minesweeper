@@ -558,7 +558,7 @@ export function MinesweeperGame({
     // Color mapping for sector states
     const sectorColors: Record<SectorState, string> = {
       untouched: '#44403c', // stone-700
-      'in-progress': '#b45309', // amber-700
+      'in-progress': '#57534e', // stone-600 (lighter gray than untouched)
       finished: '#15803d', // green-700
     }
 
@@ -715,7 +715,7 @@ export function MinesweeperGame({
     const legendItemY = legendY + 120
     const legendItems = [
       { color: '#44403c', label: 'Unexplored', icon: '🔲' },
-      { color: '#b45309', label: 'In Progress', icon: '🔶' },
+      { color: '#57534e', label: 'In Progress', icon: '⬜' },
       { color: '#15803d', label: 'Completed', icon: '✅' },
     ]
 
