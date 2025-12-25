@@ -89,11 +89,13 @@ type InitialPreferencesData = {
 type MinesweeperGameProps = {
   initialSave?: InitialSaveData
   initialPreferences?: InitialPreferencesData
+  nickname?: string
 }
 
 export function MinesweeperGame({
   initialSave,
   initialPreferences,
+  nickname = 'Player',
 }: MinesweeperGameProps) {
   const navigate = useNavigate()
   const [seed] = useState(
@@ -649,6 +651,11 @@ export function MinesweeperGame({
     ctx.textAlign = 'left'
     ctx.fillText('Infinite Minesweeper', 24, legendY + 28)
 
+    // Player nickname
+    ctx.fillStyle = '#a8a29e' // stone-400
+    ctx.font = '14px system-ui, -apple-system, sans-serif'
+    ctx.fillText(`Player: ${nickname}`, 24, legendY + 50)
+
     // Date/time subtitle
     const now = new Date()
     const dateTimeStr = now.toLocaleString(undefined, {
@@ -659,12 +666,12 @@ export function MinesweeperGame({
       minute: '2-digit',
     })
     ctx.fillStyle = '#78716c' // stone-500
-    ctx.font = '13px system-ui, -apple-system, sans-serif'
-    ctx.fillText(dateTimeStr, 24, legendY + 50)
+    ctx.font = '12px system-ui, -apple-system, sans-serif'
+    ctx.fillText(dateTimeStr, 24, legendY + 70)
 
     // Progress bar background
     const progressBarX = 24
-    const progressBarY = legendY + 70
+    const progressBarY = legendY + 90
     const progressBarWidth = 320
     const progressBarHeight = 24
     const progressBarRadius = 12
@@ -713,7 +720,7 @@ export function MinesweeperGame({
     )
 
     // Color legend with icons
-    const legendItemY = legendY + 120
+    const legendItemY = legendY + 140
     const legendItems = [
       { color: '#44403c', label: 'Unexplored' },
       { color: '#57534e', label: 'In Progress' },
@@ -736,63 +743,74 @@ export function MinesweeperGame({
       currentX += ctx.measureText(item.label).width + 50
     })
 
-    // === RIGHT SIDE: Minimal Stats Card ===
-    const statsCardWidth = 220
-    const statsCardHeight = 130
-    const statsCardX = canvasWidth - 24 - statsCardWidth
-    const statsCardY = legendY + 10
-    const statsCardRadius = 16
+    // === RIGHT SIDE: Separate Stats Cards ===
+    const cardWidth = 160
+    const cardHeight = 80
+    const cardRadius = 12
+    const cardGap = 16
+    const cardsStartX = canvasWidth - 24 - cardWidth
 
-    // Card background with subtle border effect
-    ctx.fillStyle = '#1c1917' // stone-900
-    drawRoundedRect(
-      statsCardX,
-      statsCardY,
-      statsCardWidth,
-      statsCardHeight,
-      statsCardRadius,
-    )
+    // --- Tiles Cleared Card ---
+    const tilesCardY = legendY + 10
+
+    // Card background
+    ctx.fillStyle = '#292524' // stone-800
+    drawRoundedRect(cardsStartX, tilesCardY, cardWidth, cardHeight, cardRadius)
     ctx.fill()
 
-    // Inner card with slight offset for depth
+    // Subtle top accent line
+    ctx.fillStyle = '#fbbf24' // amber-400
+    drawRoundedRect(cardsStartX, tilesCardY, cardWidth, 3, cardRadius)
+    ctx.fill()
+
+    // Label
+    ctx.fillStyle = '#78716c' // stone-500
+    ctx.font = '10px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('TILES CLEARED', cardsStartX + 16, tilesCardY + 28)
+
+    // Value
+    ctx.fillStyle = '#fafaf9' // stone-50
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
+    ctx.fillText(
+      revealedCount.toLocaleString(),
+      cardsStartX + 16,
+      tilesCardY + 60,
+    )
+
+    // --- Sectors Completed Card ---
+    const sectorsCardY = tilesCardY + cardHeight + cardGap
+
+    // Card background
     ctx.fillStyle = '#292524' // stone-800
     drawRoundedRect(
-      statsCardX + 1,
-      statsCardY + 1,
-      statsCardWidth - 2,
-      statsCardHeight - 2,
-      statsCardRadius - 1,
+      cardsStartX,
+      sectorsCardY,
+      cardWidth,
+      cardHeight,
+      cardRadius,
     )
     ctx.fill()
 
-    // Tiles cleared section
-    const tilesY = statsCardY + 32
-    ctx.fillStyle = '#78716c' // stone-500
-    ctx.font = '11px system-ui, -apple-system, sans-serif'
-    ctx.textAlign = 'left'
-    ctx.fillText('TILES CLEARED', statsCardX + 20, tilesY)
-
-    ctx.fillStyle = '#fafaf9' // stone-50
-    ctx.font = 'bold 32px system-ui, -apple-system, sans-serif'
-    ctx.fillText(revealedCount.toLocaleString(), statsCardX + 20, tilesY + 36)
-
-    // Divider line
-    ctx.strokeStyle = '#44403c' // stone-700
-    ctx.lineWidth = 1
-    ctx.beginPath()
-    ctx.moveTo(statsCardX + 20, statsCardY + 82)
-    ctx.lineTo(statsCardX + statsCardWidth - 20, statsCardY + 82)
-    ctx.stroke()
-
-    // Sectors completed section
-    const sectorsY = statsCardY + 100
-    ctx.fillStyle = '#78716c' // stone-500
-    ctx.font = '11px system-ui, -apple-system, sans-serif'
-    ctx.fillText('SECTORS COMPLETED', statsCardX + 20, sectorsY)
-
+    // Subtle top accent line
     ctx.fillStyle = '#22c55e' // green-500
-    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif'
-    ctx.fillText(finishedCount.toLocaleString(), statsCardX + 20, sectorsY + 22)
+    drawRoundedRect(cardsStartX, sectorsCardY, cardWidth, 3, cardRadius)
+    ctx.fill()
+
+    // Label
+    ctx.fillStyle = '#78716c' // stone-500
+    ctx.font = '10px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('SECTORS COMPLETED', cardsStartX + 16, sectorsCardY + 28)
+
+    // Value
+    ctx.fillStyle = '#22c55e' // green-500
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
+    ctx.fillText(
+      finishedCount.toLocaleString(),
+      cardsStartX + 16,
+      sectorsCardY + 60,
+    )
 
     // Map coordinates footer
     ctx.fillStyle = '#57534e' // stone-600
@@ -822,7 +840,7 @@ export function MinesweeperGame({
       URL.revokeObjectURL(url)
       setExportProgress(null)
     }, 'image/png')
-  }, [getSectorState, exportProgress, revealedCount])
+  }, [getSectorState, exportProgress, revealedCount, nickname])
 
   // Check if at minimum zoom (10%)
   const isAtMinZoom = zoom <= 0.1

@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_protected/play')({
   component: PlayPage,
   loader: async () => {
     // Check onboarding status first - redirect if not completed
-    const { isCompleted } = await getOnboardingStatusFn()
+    const { isCompleted, onboarding } = await getOnboardingStatusFn()
     if (!isCompleted) {
       throw redirect({ to: '/onboarding' })
     }
@@ -19,17 +19,22 @@ export const Route = createFileRoute('/_protected/play')({
       getGameSaveFn(),
       getUserPreferencesFn(),
     ])
-    return { initialSave: save, initialPreferences: preferences }
+    return {
+      initialSave: save,
+      initialPreferences: preferences,
+      nickname: onboarding?.nickname ?? 'Player',
+    }
   },
 })
 
 function PlayPage() {
-  const { initialSave, initialPreferences } = Route.useLoaderData()
+  const { initialSave, initialPreferences, nickname } = Route.useLoaderData()
 
   return (
     <MinesweeperGame
       initialSave={initialSave}
       initialPreferences={initialPreferences}
+      nickname={nickname}
     />
   )
 }
