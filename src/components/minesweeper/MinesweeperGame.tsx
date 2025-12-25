@@ -14,7 +14,15 @@ import {
   type SectorState,
   type InitialSaveData,
 } from './useInfiniteGrid'
-import { Heart, MapPin, CloudOff, Cloud } from 'lucide-react'
+import {
+  Heart,
+  MapPin,
+  CloudOff,
+  Cloud,
+  Loader2,
+  Check,
+  AlertCircle,
+} from 'lucide-react'
 import { useServerFn } from '@tanstack/react-start'
 import {
   saveGameFn,
@@ -179,6 +187,9 @@ export function MinesweeperGame({
     getSerializableState,
     markAsSaved,
   } = useInfiniteGrid(seed, 0.15, initialSave)
+
+  // Track previous lives to detect when player dies
+  const prevLivesRef = useRef<number>(maxLives)
 
   // Trigger flash effect for long-press feedback
   const triggerFlash = useCallback(() => {
@@ -362,6 +373,22 @@ export function MinesweeperGame({
       }
     }
   }, [isDirty, performSave])
+
+  // Auto-save immediately when player runs out of lives
+  useEffect(() => {
+    // Check if lives just dropped to 0
+    if (prevLivesRef.current > 0 && lives === 0) {
+      // Clear any pending auto-save timer
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+        autoSaveTimerRef.current = null
+      }
+      // Trigger immediate save
+      performSave()
+    }
+    // Update previous lives ref
+    prevLivesRef.current = lives
+  }, [lives, performSave])
 
   // Auto-save preferences when they change
   useEffect(() => {
@@ -1201,6 +1228,67 @@ export function MinesweeperGame({
                   }
                 />
               ))}
+            </div>
+
+            {/* Save status indicator */}
+            <div className="mt-6 pt-4 border-t border-stone-700">
+              <button
+                onClick={performSave}
+                disabled={isSaving || (!isDirty && !saveError)}
+                className={`
+                  inline-flex items-center gap-2 px-4 py-2 rounded-lg
+                  transition-all duration-200
+                  ${
+                    saveError
+                      ? 'bg-red-900/50 hover:bg-red-900/70 cursor-pointer'
+                      : isSaving
+                        ? 'bg-stone-800 cursor-wait'
+                        : isDirty
+                          ? 'bg-stone-800 hover:bg-stone-700 cursor-pointer'
+                          : 'bg-stone-800/50 cursor-default'
+                  }
+                `}
+                title={
+                  saveError
+                    ? 'Click to retry saving'
+                    : isDirty
+                      ? 'Click to save now'
+                      : 'Game saved'
+                }
+              >
+                {saveError ? (
+                  <>
+                    <AlertCircle size={16} className="text-red-400" />
+                    <span className="text-red-400 text-sm font-medium">
+                      Save failed - tap to retry
+                    </span>
+                  </>
+                ) : isSaving ? (
+                  <>
+                    <Loader2
+                      size={16}
+                      className="text-amber-400 animate-spin"
+                    />
+                    <span className="text-amber-400 text-sm font-medium">
+                      Saving...
+                    </span>
+                  </>
+                ) : isDirty ? (
+                  <>
+                    <CloudOff size={16} className="text-stone-400" />
+                    <span className="text-stone-400 text-sm font-medium">
+                      Unsaved changes - tap to save
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} className="text-green-400" />
+                    <span className="text-green-400 text-sm font-medium">
+                      Progress saved
+                    </span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
