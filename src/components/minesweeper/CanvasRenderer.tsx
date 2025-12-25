@@ -457,6 +457,7 @@ export const CanvasRenderer = memo(function CanvasRenderer({
   // Mobile touch handlers
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
+      e.preventDefault() // Prevent text selection and other default behaviors
       if (!isMobile || gameState !== 'playing') return
 
       // If pinching or multiple touches, don't start long press
@@ -522,6 +523,8 @@ export const CanvasRenderer = memo(function CanvasRenderer({
   )
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault() // Prevent text selection and other default behaviors
+
     // Cancel long press if multiple fingers detected (pinch starting)
     if (e.touches.length > 1) {
       wasPinchingRef.current = true
@@ -547,75 +550,79 @@ export const CanvasRenderer = memo(function CanvasRenderer({
     }
   }, [])
 
-  const handleTouchEnd = useCallback(() => {
-    if (!isMobile || gameState !== 'playing') return
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault() // Prevent text selection and other default behaviors
+      if (!isMobile || gameState !== 'playing') return
 
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current)
+        longPressTimerRef.current = null
+      }
 
-    if (isLongPressRef.current) {
-      isLongPressRef.current = false
-      touchStartPosRef.current = null
-      hasMovedRef.current = false
-      wasPinchingRef.current = false
-      return
-    }
+      if (isLongPressRef.current) {
+        isLongPressRef.current = false
+        touchStartPosRef.current = null
+        hasMovedRef.current = false
+        wasPinchingRef.current = false
+        return
+      }
 
-    if (
-      hasMovedRef.current ||
-      wasPinchingRef.current ||
-      isPinchingRef.current
-    ) {
-      touchStartPosRef.current = null
-      hasMovedRef.current = false
-      wasPinchingRef.current = false
-      return
-    }
+      if (
+        hasMovedRef.current ||
+        wasPinchingRef.current ||
+        isPinchingRef.current
+      ) {
+        touchStartPosRef.current = null
+        hasMovedRef.current = false
+        wasPinchingRef.current = false
+        return
+      }
 
-    // Handle tap
-    if (touchStartPosRef.current) {
-      const rect = canvasRef.current?.getBoundingClientRect()
-      if (rect) {
-        const screenX = touchStartPosRef.current.x - rect.left
-        const screenY = touchStartPosRef.current.y - rect.top
+      // Handle tap
+      if (touchStartPosRef.current) {
+        const rect = canvasRef.current?.getBoundingClientRect()
+        if (rect) {
+          const screenX = touchStartPosRef.current.x - rect.left
+          const screenY = touchStartPosRef.current.y - rect.top
 
-        if (isZoomedOut) {
-          const { sectorX, sectorY } = screenToCell(screenX, screenY)
-          onSectorClick(sectorX, sectorY)
-        } else {
-          const { cellX, cellY } = screenToCell(screenX, screenY)
-          const state = getCellState(cellX, cellY)
-
-          if (mobileMode === 'default') {
-            if (!state.flagged) {
-              onReveal(cellX, cellY)
-            }
+          if (isZoomedOut) {
+            const { sectorX, sectorY } = screenToCell(screenX, screenY)
+            onSectorClick(sectorX, sectorY)
           } else {
-            if (!state.revealed) {
-              onFlag(cellX, cellY)
+            const { cellX, cellY } = screenToCell(screenX, screenY)
+            const state = getCellState(cellX, cellY)
+
+            if (mobileMode === 'default') {
+              if (!state.flagged) {
+                onReveal(cellX, cellY)
+              }
+            } else {
+              if (!state.revealed) {
+                onFlag(cellX, cellY)
+              }
             }
           }
         }
       }
-    }
 
-    touchStartPosRef.current = null
-    hasMovedRef.current = false
-    wasPinchingRef.current = false
-  }, [
-    isMobile,
-    gameState,
-    isPinchingRef,
-    isZoomedOut,
-    screenToCell,
-    getCellState,
-    mobileMode,
-    onReveal,
-    onFlag,
-    onSectorClick,
-  ])
+      touchStartPosRef.current = null
+      hasMovedRef.current = false
+      wasPinchingRef.current = false
+    },
+    [
+      isMobile,
+      gameState,
+      isPinchingRef,
+      isZoomedOut,
+      screenToCell,
+      getCellState,
+      mobileMode,
+      onReveal,
+      onFlag,
+      onSectorClick,
+    ],
+  )
 
   const handleTouchCancel = useCallback(() => {
     if (longPressTimerRef.current) {
@@ -632,7 +639,12 @@ export const CanvasRenderer = memo(function CanvasRenderer({
     <canvas
       ref={canvasRef}
       className="absolute inset-0"
-      style={{ touchAction: 'none' }}
+      style={{
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
+      }}
       onClick={isMobile ? undefined : handleClick}
       onContextMenu={handleContextMenu}
       onTouchStart={handleTouchStart}

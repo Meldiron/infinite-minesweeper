@@ -1252,6 +1252,9 @@ export function MinesweeperGame({
       className="relative w-full bg-stone-800 overflow-hidden select-none touch-none"
       style={{
         height: '100dvh',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
       }}
     >
       {/* Long-press flash effect */}
