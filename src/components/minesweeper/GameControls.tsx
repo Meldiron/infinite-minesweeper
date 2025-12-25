@@ -499,7 +499,7 @@ export function InteractionModeToggle({
 }) {
   return (
     <div
-      className="absolute left-1/2 -translate-x-1/2 z-10 pointer-events-auto md:hidden"
+      className="absolute left-1/2 -translate-x-1/2 z-10 pointer-events-auto"
       style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="bg-stone-900/95 backdrop-blur-sm rounded-full shadow-lg px-3 py-2 flex items-center gap-2">
