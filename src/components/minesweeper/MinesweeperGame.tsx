@@ -568,7 +568,6 @@ export function MinesweeperGame({
 
     // Track statistics while rendering
     let finishedCount = 0
-    let inProgressCount = 0
     const totalSectors = EXPORT_SECTOR_SIZE * EXPORT_SECTOR_SIZE
 
     // Process in chunks to prevent freezing
@@ -588,8 +587,6 @@ export function MinesweeperGame({
             // Track statistics
             if (state === 'finished') {
               finishedCount++
-            } else if (state === 'in-progress') {
-              inProgressCount++
             }
 
             // Only draw if not untouched (untouched is already the background)
@@ -739,95 +736,63 @@ export function MinesweeperGame({
       currentX += ctx.measureText(item.label).width + 50
     })
 
-    // === RIGHT SIDE: Gamified Stats ===
-    const statsX = canvasWidth - 24
+    // === RIGHT SIDE: Minimal Stats Card ===
+    const statsCardWidth = 220
+    const statsCardHeight = 130
+    const statsCardX = canvasWidth - 24 - statsCardWidth
+    const statsCardY = legendY + 10
+    const statsCardRadius = 16
 
-    // XP-style tiles counter with badge
-    const tilesBoxWidth = 200
-    const tilesBoxHeight = 70
-    const tilesBoxX = statsX - tilesBoxWidth
-    const tilesBoxY = legendY + 10
-
-    // Badge background
-    ctx.fillStyle = '#292524' // stone-800
-    drawRoundedRect(tilesBoxX, tilesBoxY, tilesBoxWidth, tilesBoxHeight, 12)
-    ctx.fill()
-
-    // Badge accent line
-    ctx.fillStyle = '#f59e0b' // amber-500
-    drawRoundedRect(tilesBoxX, tilesBoxY, 6, tilesBoxHeight, 3)
-    ctx.fill()
-
-    // XP icon and label
-    ctx.fillStyle = '#fbbf24' // amber-400
-    ctx.font = 'bold 13px system-ui, -apple-system, sans-serif'
-    ctx.textAlign = 'left'
-    ctx.fillText('TILES CLEARED', tilesBoxX + 16, tilesBoxY + 22)
-
-    // Big number
-    ctx.fillStyle = '#fafaf9' // stone-50
-    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
-    ctx.fillText(revealedCount.toLocaleString(), tilesBoxX + 16, tilesBoxY + 54)
-
-    // Sectors completed badge
-    const sectorsBoxY = tilesBoxY + tilesBoxHeight + 12
-    const sectorsBoxHeight = 50
-
-    ctx.fillStyle = '#292524' // stone-800
-    drawRoundedRect(tilesBoxX, sectorsBoxY, tilesBoxWidth, sectorsBoxHeight, 12)
-    ctx.fill()
-
-    // Badge accent line (green for completed)
-    ctx.fillStyle = '#22c55e' // green-500
-    drawRoundedRect(tilesBoxX, sectorsBoxY, 6, sectorsBoxHeight, 3)
-    ctx.fill()
-
-    // Sectors icon and count
-    ctx.fillStyle = '#4ade80' // green-400
-    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif'
-    ctx.textAlign = 'left'
-    ctx.fillText('SECTORS', tilesBoxX + 16, sectorsBoxY + 20)
-
-    ctx.fillStyle = '#fafaf9' // stone-50
-    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif'
-    ctx.fillText(
-      `${finishedCount.toLocaleString()} completed`,
-      tilesBoxX + 16,
-      sectorsBoxY + 40,
+    // Card background with subtle border effect
+    ctx.fillStyle = '#1c1917' // stone-900
+    drawRoundedRect(
+      statsCardX,
+      statsCardY,
+      statsCardWidth,
+      statsCardHeight,
+      statsCardRadius,
     )
+    ctx.fill()
 
-    // In-progress mini badge
-    const inProgressBoxX = tilesBoxX - 120
-    const inProgressBoxY = sectorsBoxY
-    const inProgressBoxWidth = 110
-    const inProgressBoxHeight = 50
-
+    // Inner card with slight offset for depth
     ctx.fillStyle = '#292524' // stone-800
     drawRoundedRect(
-      inProgressBoxX,
-      inProgressBoxY,
-      inProgressBoxWidth,
-      inProgressBoxHeight,
-      12,
+      statsCardX + 1,
+      statsCardY + 1,
+      statsCardWidth - 2,
+      statsCardHeight - 2,
+      statsCardRadius - 1,
     )
     ctx.fill()
 
-    // Amber accent
-    ctx.fillStyle = '#f59e0b' // amber-500
-    drawRoundedRect(inProgressBoxX, inProgressBoxY, 6, inProgressBoxHeight, 3)
-    ctx.fill()
-
-    ctx.fillStyle = '#fbbf24' // amber-400
-    ctx.font = 'bold 11px system-ui, -apple-system, sans-serif'
-    ctx.fillText('ACTIVE', inProgressBoxX + 14, inProgressBoxY + 20)
+    // Tiles cleared section
+    const tilesY = statsCardY + 32
+    ctx.fillStyle = '#78716c' // stone-500
+    ctx.font = '11px system-ui, -apple-system, sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('TILES CLEARED', statsCardX + 20, tilesY)
 
     ctx.fillStyle = '#fafaf9' // stone-50
-    ctx.font = 'bold 16px system-ui, -apple-system, sans-serif'
-    ctx.fillText(
-      inProgressCount.toLocaleString(),
-      inProgressBoxX + 14,
-      inProgressBoxY + 40,
-    )
+    ctx.font = 'bold 32px system-ui, -apple-system, sans-serif'
+    ctx.fillText(revealedCount.toLocaleString(), statsCardX + 20, tilesY + 36)
+
+    // Divider line
+    ctx.strokeStyle = '#44403c' // stone-700
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(statsCardX + 20, statsCardY + 82)
+    ctx.lineTo(statsCardX + statsCardWidth - 20, statsCardY + 82)
+    ctx.stroke()
+
+    // Sectors completed section
+    const sectorsY = statsCardY + 100
+    ctx.fillStyle = '#78716c' // stone-500
+    ctx.font = '11px system-ui, -apple-system, sans-serif'
+    ctx.fillText('SECTORS COMPLETED', statsCardX + 20, sectorsY)
+
+    ctx.fillStyle = '#22c55e' // green-500
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif'
+    ctx.fillText(finishedCount.toLocaleString(), statsCardX + 20, sectorsY + 22)
 
     // Map coordinates footer
     ctx.fillStyle = '#57534e' // stone-600
