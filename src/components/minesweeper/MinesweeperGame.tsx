@@ -650,7 +650,7 @@ export function MinesweeperGame({
     ctx.fillStyle = '#fafaf9' // stone-50
     ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('💣 Infinite Minesweeper', 24, legendY + 28)
+    ctx.fillText('Infinite Minesweeper', 24, legendY + 28)
 
     // Date/time subtitle
     const now = new Date()
@@ -718,9 +718,9 @@ export function MinesweeperGame({
     // Color legend with icons
     const legendItemY = legendY + 120
     const legendItems = [
-      { color: '#44403c', label: 'Unexplored', icon: '🔲' },
-      { color: '#57534e', label: 'In Progress', icon: '⬜' },
-      { color: '#15803d', label: 'Completed', icon: '✅' },
+      { color: '#44403c', label: 'Unexplored' },
+      { color: '#57534e', label: 'In Progress' },
+      { color: '#15803d', label: 'Completed' },
     ]
 
     ctx.font = '13px system-ui, -apple-system, sans-serif'
@@ -728,18 +728,15 @@ export function MinesweeperGame({
     let currentX = 24
 
     legendItems.forEach((item) => {
-      // Draw icon
-      ctx.fillText(item.icon, currentX, legendItemY)
-
       // Draw color box
       ctx.fillStyle = item.color
-      ctx.fillRect(currentX + 22, legendItemY - 12, 14, 14)
+      ctx.fillRect(currentX, legendItemY - 12, 14, 14)
 
       // Draw label
       ctx.fillStyle = '#a8a29e' // stone-400
-      ctx.fillText(item.label, currentX + 42, legendItemY)
+      ctx.fillText(item.label, currentX + 20, legendItemY)
 
-      currentX += ctx.measureText(item.label).width + 75
+      currentX += ctx.measureText(item.label).width + 50
     })
 
     // === RIGHT SIDE: Gamified Stats ===
@@ -765,7 +762,7 @@ export function MinesweeperGame({
     ctx.fillStyle = '#fbbf24' // amber-400
     ctx.font = 'bold 13px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('⚡ TILES CLEARED', tilesBoxX + 16, tilesBoxY + 22)
+    ctx.fillText('TILES CLEARED', tilesBoxX + 16, tilesBoxY + 22)
 
     // Big number
     ctx.fillStyle = '#fafaf9' // stone-50
@@ -789,7 +786,7 @@ export function MinesweeperGame({
     ctx.fillStyle = '#4ade80' // green-400
     ctx.font = 'bold 12px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('🏆 SECTORS', tilesBoxX + 16, sectorsBoxY + 20)
+    ctx.fillText('SECTORS', tilesBoxX + 16, sectorsBoxY + 20)
 
     ctx.fillStyle = '#fafaf9' // stone-50
     ctx.font = 'bold 18px system-ui, -apple-system, sans-serif'
@@ -822,7 +819,7 @@ export function MinesweeperGame({
 
     ctx.fillStyle = '#fbbf24' // amber-400
     ctx.font = 'bold 11px system-ui, -apple-system, sans-serif'
-    ctx.fillText('🔥 ACTIVE', inProgressBoxX + 14, inProgressBoxY + 20)
+    ctx.fillText('ACTIVE', inProgressBoxX + 14, inProgressBoxY + 20)
 
     ctx.fillStyle = '#fafaf9' // stone-50
     ctx.font = 'bold 16px system-ui, -apple-system, sans-serif'
