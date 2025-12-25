@@ -643,20 +643,20 @@ export function MinesweeperGame({
       ctx.closePath()
     }
 
-    // === LEFT SIDE: Branding & Progress ===
+    // === LEFT SIDE: Player Identity & Progress ===
 
-    // Title with emoji
+    // Player nickname - HERO element
     ctx.fillStyle = '#fafaf9' // stone-50
-    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
+    ctx.font = 'bold 36px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('Infinite Minesweeper', 24, legendY + 28)
+    ctx.fillText(nickname, 24, legendY + 36)
 
-    // Player nickname
-    ctx.fillStyle = '#a8a29e' // stone-400
+    // Game title - subtitle
+    ctx.fillStyle = '#78716c' // stone-500
     ctx.font = '14px system-ui, -apple-system, sans-serif'
-    ctx.fillText(`Player: ${nickname}`, 24, legendY + 50)
+    ctx.fillText('Infinite Minesweeper', 24, legendY + 58)
 
-    // Date/time subtitle
+    // Date/time
     const now = new Date()
     const dateTimeStr = now.toLocaleString(undefined, {
       year: 'numeric',
@@ -665,16 +665,16 @@ export function MinesweeperGame({
       hour: '2-digit',
       minute: '2-digit',
     })
-    ctx.fillStyle = '#78716c' // stone-500
+    ctx.fillStyle = '#57534e' // stone-600
     ctx.font = '12px system-ui, -apple-system, sans-serif'
-    ctx.fillText(dateTimeStr, 24, legendY + 70)
+    ctx.fillText(dateTimeStr, 24, legendY + 78)
 
     // Progress bar background
     const progressBarX = 24
-    const progressBarY = legendY + 90
+    const progressBarY = legendY + 100
     const progressBarWidth = 320
-    const progressBarHeight = 24
-    const progressBarRadius = 12
+    const progressBarHeight = 20
+    const progressBarRadius = 10
 
     ctx.fillStyle = '#292524' // stone-800
     drawRoundedRect(
@@ -711,106 +711,120 @@ export function MinesweeperGame({
 
     // Progress percentage text on bar
     ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif'
+    ctx.font = 'bold 11px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText(
-      `${completionPercent.toFixed(2)}%`,
+      `${completionPercent.toFixed(2)}% explored`,
       progressBarX + progressBarWidth / 2,
-      progressBarY + 16,
+      progressBarY + 14,
     )
 
-    // Color legend with icons
-    const legendItemY = legendY + 140
+    // Color legend
+    const legendItemY = legendY + 145
     const legendItems = [
       { color: '#44403c', label: 'Unexplored' },
       { color: '#57534e', label: 'In Progress' },
       { color: '#15803d', label: 'Completed' },
     ]
 
-    ctx.font = '13px system-ui, -apple-system, sans-serif'
+    ctx.font = '12px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
     let currentX = 24
 
     legendItems.forEach((item) => {
-      // Draw color box
+      // Draw color box with rounded corners
       ctx.fillStyle = item.color
-      ctx.fillRect(currentX, legendItemY - 12, 14, 14)
+      drawRoundedRect(currentX, legendItemY - 10, 12, 12, 3)
+      ctx.fill()
 
       // Draw label
       ctx.fillStyle = '#a8a29e' // stone-400
-      ctx.fillText(item.label, currentX + 20, legendItemY)
+      ctx.fillText(item.label, currentX + 18, legendItemY)
 
-      currentX += ctx.measureText(item.label).width + 50
+      currentX += ctx.measureText(item.label).width + 45
     })
 
-    // === RIGHT SIDE: Separate Stats Cards ===
-    const cardWidth = 160
-    const cardHeight = 80
-    const cardRadius = 12
-    const cardGap = 16
-    const cardsStartX = canvasWidth - 24 - cardWidth
+    // === RIGHT SIDE: Stats Panel ===
+    const panelWidth = 180
+    const panelHeight = 160
+    const panelX = canvasWidth - 24 - panelWidth
+    const panelY = legendY + 8
+    const panelRadius = 16
 
-    // --- Tiles Cleared Card ---
-    const tilesCardY = legendY + 10
-
-    // Card background
+    // Panel background
     ctx.fillStyle = '#292524' // stone-800
-    drawRoundedRect(cardsStartX, tilesCardY, cardWidth, cardHeight, cardRadius)
+    drawRoundedRect(panelX, panelY, panelWidth, panelHeight, panelRadius)
     ctx.fill()
 
-    // Subtle top accent line
+    // Panel border
+    ctx.strokeStyle = '#3f3f46' // stone-700
+    ctx.lineWidth = 1
+    drawRoundedRect(panelX, panelY, panelWidth, panelHeight, panelRadius)
+    ctx.stroke()
+
+    // --- Tiles Cleared Section ---
+    const tilesY = panelY + 36
+
+    // Icon circle background
     ctx.fillStyle = '#fbbf24' // amber-400
-    drawRoundedRect(cardsStartX, tilesCardY, cardWidth, 3, cardRadius)
+    ctx.globalAlpha = 0.15
+    ctx.beginPath()
+    ctx.arc(panelX + 28, tilesY - 4, 14, 0, Math.PI * 2)
     ctx.fill()
+    ctx.globalAlpha = 1
+
+    // Icon text (lightning bolt unicode)
+    ctx.fillStyle = '#fbbf24' // amber-400
+    ctx.font = '14px system-ui'
+    ctx.textAlign = 'center'
+    ctx.fillText('⚡', panelX + 28, tilesY)
 
     // Label
     ctx.fillStyle = '#78716c' // stone-500
     ctx.font = '10px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('TILES CLEARED', cardsStartX + 16, tilesCardY + 28)
+    ctx.fillText('TILES CLEARED', panelX + 50, tilesY - 8)
 
     // Value
     ctx.fillStyle = '#fafaf9' // stone-50
-    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
-    ctx.fillText(
-      revealedCount.toLocaleString(),
-      cardsStartX + 16,
-      tilesCardY + 60,
-    )
+    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif'
+    ctx.fillText(revealedCount.toLocaleString(), panelX + 50, tilesY + 14)
 
-    // --- Sectors Completed Card ---
-    const sectorsCardY = tilesCardY + cardHeight + cardGap
+    // Divider
+    ctx.strokeStyle = '#3f3f46' // stone-700
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(panelX + 20, panelY + 68)
+    ctx.lineTo(panelX + panelWidth - 20, panelY + 68)
+    ctx.stroke()
 
-    // Card background
-    ctx.fillStyle = '#292524' // stone-800
-    drawRoundedRect(
-      cardsStartX,
-      sectorsCardY,
-      cardWidth,
-      cardHeight,
-      cardRadius,
-    )
-    ctx.fill()
+    // --- Sectors Completed Section ---
+    const sectorsY = panelY + 108
 
-    // Subtle top accent line
+    // Icon circle background
     ctx.fillStyle = '#22c55e' // green-500
-    drawRoundedRect(cardsStartX, sectorsCardY, cardWidth, 3, cardRadius)
+    ctx.globalAlpha = 0.15
+    ctx.beginPath()
+    ctx.arc(panelX + 28, sectorsY - 4, 14, 0, Math.PI * 2)
     ctx.fill()
+    ctx.globalAlpha = 1
+
+    // Icon text (trophy unicode)
+    ctx.fillStyle = '#22c55e' // green-500
+    ctx.font = '14px system-ui'
+    ctx.textAlign = 'center'
+    ctx.fillText('🏆', panelX + 28, sectorsY)
 
     // Label
     ctx.fillStyle = '#78716c' // stone-500
     ctx.font = '10px system-ui, -apple-system, sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('SECTORS COMPLETED', cardsStartX + 16, sectorsCardY + 28)
+    ctx.fillText('SECTORS DONE', panelX + 50, sectorsY - 8)
 
     // Value
     ctx.fillStyle = '#22c55e' // green-500
-    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif'
-    ctx.fillText(
-      finishedCount.toLocaleString(),
-      cardsStartX + 16,
-      sectorsCardY + 60,
-    )
+    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif'
+    ctx.fillText(finishedCount.toLocaleString(), panelX + 50, sectorsY + 14)
 
     // Map coordinates footer
     ctx.fillStyle = '#57534e' // stone-600
