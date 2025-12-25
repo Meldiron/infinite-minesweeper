@@ -118,6 +118,9 @@ export function MinesweeperGame({
   })
   const [exportProgress, setExportProgress] = useState<number | null>(null)
 
+  // Position indicator minimized state (default to minimized)
+  const [positionMinimized, setPositionMinimized] = useState(true)
+
   // Initialize from preferences if available
   const [instructionsCollapsed, setInstructionsCollapsed] = useState(() =>
     initialPreferences ? !initialPreferences.instructionsOpen : false,
@@ -1321,15 +1324,21 @@ export function MinesweeperGame({
 
       {/* Sector position indicator - always visible */}
       <div
-        className="absolute right-4 bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 pointer-events-none z-10"
+        className="absolute right-4 bg-stone-900/95 text-stone-100 backdrop-blur-sm rounded-lg shadow-lg px-3 py-2 z-10 cursor-pointer hover:bg-stone-800/95 transition-colors"
         style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+        onClick={() => setPositionMinimized((prev) => !prev)}
+        title={
+          positionMinimized ? 'Show position details' : 'Hide position details'
+        }
       >
         <div className="flex items-center gap-2">
           <MapPin size={16} className="text-amber-500" />
-          <span className="font-mono">
-            {isMobile ? centerSector.x : currentSector.x},{' '}
-            {isMobile ? centerSector.y : currentSector.y}
-          </span>
+          {!positionMinimized && (
+            <span className="font-mono">
+              {isMobile ? centerSector.x : currentSector.x},{' '}
+              {isMobile ? centerSector.y : currentSector.y}
+            </span>
+          )}
         </div>
       </div>
 
