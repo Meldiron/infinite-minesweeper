@@ -84,7 +84,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
       {
         property: 'og:image:type',
-        content: 'image/svg+xml',
+        content: 'image/png',
       },
       // Twitter Card
       {
