@@ -5,7 +5,7 @@ import { useServerFn } from '@tanstack/react-start'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, UserPlus, Loader2, AlertCircle, Check } from 'lucide-react'
+import { UserPlus, Loader2, AlertCircle, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -98,11 +98,11 @@ export function ClaimAccountAlert({ onDismiss }: ClaimAccountAlertProps) {
   return (
     <>
       {/* Single-row alert bar */}
-      <div className="absolute top-0 left-0 right-0 z-50 bg-amber-900/95 backdrop-blur-sm border-b border-amber-700 px-4 py-2.5">
-        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 text-amber-100 min-w-0">
-            <UserPlus size={18} className="text-amber-400 flex-shrink-0" />
-            <span className="text-sm truncate">
+      <div className="absolute top-0 left-0 right-0 z-50 bg-amber-950/95 backdrop-blur-sm border-b-2 border-amber-500 px-3 py-2">
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-amber-100 min-w-0">
+            <UserPlus size={16} className="text-amber-400 flex-shrink-0" />
+            <span className="text-xs truncate">
               <span className="font-medium">Playing as guest.</span>{' '}
               <span className="text-amber-200/80 hidden sm:inline">
                 Add email & password to save your progress.
@@ -113,17 +113,16 @@ export function ClaimAccountAlert({ onDismiss }: ClaimAccountAlertProps) {
             <Button
               size="sm"
               variant="secondary"
-              className="bg-amber-700 hover:bg-amber-600 text-amber-100 border-0 h-7 px-3 text-xs"
+              className="bg-amber-700 hover:bg-amber-600 text-amber-100 border-0 h-6 px-2.5 text-xs"
               onClick={() => setIsModalOpen(true)}
             >
               Claim Account
             </Button>
             <button
               onClick={handleDismiss}
-              className="text-amber-400 hover:text-amber-200 p-1"
-              aria-label="Dismiss"
+              className="text-amber-400 hover:text-amber-200 text-xs font-medium px-1"
             >
-              <X size={18} />
+              Later
             </button>
           </div>
         </div>
