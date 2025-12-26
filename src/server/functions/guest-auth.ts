@@ -10,6 +10,9 @@ import {
 } from '@tanstack/react-start/server'
 import { db, Query, Permission, Role } from './db-helper'
 
+// 1 year in seconds
+const ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60
+
 // Helper to get session (duplicated from auth.ts since we can't import private functions)
 const getSession = () => {
   return getCookie('appwrite-session-secret')
@@ -21,12 +24,14 @@ const setSessionCookies = (id: string, secret: string) => {
     httpOnly: true,
     secure: true,
     sameSite: 'none',
+    maxAge: ONE_YEAR_IN_SECONDS,
   })
 
   setCookie('appwrite-session-id', id, {
     httpOnly: true,
     secure: true,
     sameSite: 'none',
+    maxAge: ONE_YEAR_IN_SECONDS,
   })
 }
 
