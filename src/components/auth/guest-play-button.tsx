@@ -45,12 +45,13 @@ export function GuestPlayButton({
   return (
     <Button
       type="button"
+      size="lg"
       variant="outline"
-      className="w-full bg-stone-700 border-stone-600 text-stone-200 hover:bg-stone-600 hover:text-stone-100"
+      className="w-full bg-stone-700 border-stone-600 text-stone-200 hover:bg-stone-600 hover:text-stone-100 px-8 py-6 text-lg"
       onClick={() => guestMutation.mutate()}
       disabled={guestMutation.isPending}
     >
-      <User className="mr-2 h-4 w-4" />
+      <User className="mr-2 h-5 w-5" />
       {guestMutation.isPending ? 'Starting...' : 'Play as Guest'}
     </Button>
   )
