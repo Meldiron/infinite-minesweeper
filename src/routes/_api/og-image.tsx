@@ -4,7 +4,7 @@ import { Resvg } from '@resvg/resvg-js'
 export const Route = createFileRoute('/_api/og-image')({
   server: {
     handlers: {
-      GET: async ({ request }: { request: Request }) => {
+      GET: async ({ request }) => {
         const url = new URL(request.url)
         const title = url.searchParams.get('title') || 'Infinite Minesweeper'
         const subtitle =
@@ -108,7 +108,7 @@ export const Route = createFileRoute('/_api/og-image')({
     No boundaries. No limits. Just mines.
   </text>
 </svg>
-        `.trim()
+                `.trim()
 
         // Convert SVG to PNG using resvg
         const resvg = new Resvg(svg, {
