@@ -1,3 +1,5 @@
 export { AuthCard } from './auth-card'
 export { AuthForm } from './auth-form'
 export { AuthField } from './auth-field'
+export { GuestPlayButton } from './guest-play-button'
+export { ClaimAccountAlert } from './claim-account-alert'

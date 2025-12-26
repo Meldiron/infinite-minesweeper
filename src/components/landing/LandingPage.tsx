@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { Button } from '@/components/ui/button'
+import { GuestPlayButton } from '@/components/auth'
 import {
   Grid3X3,
   Infinity,
@@ -66,7 +67,7 @@ export function LandingPage() {
               endless grid, complete sectors, and track your progress forever.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/sign-up">
                 <Button
                   size="lg"
@@ -84,6 +85,21 @@ export function LandingPage() {
                   Sign In
                 </Button>
               </Link>
+            </div>
+
+            {/* Or divider */}
+            <div className="relative my-6 max-w-xs mx-auto">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-stone-600" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-stone-900 px-3 text-stone-500">or</span>
+              </div>
+            </div>
+
+            {/* Guest play button */}
+            <div className="max-w-xs mx-auto">
+              <GuestPlayButton redirectTo="/onboarding" />
             </div>
           </div>
         </div>
@@ -206,8 +222,8 @@ export function LandingPage() {
           <div className="grid md:grid-cols-3 gap-8">
             <StepCard
               number={1}
-              title="Create Account"
-              description="Sign up in seconds. Your game state is tied to your account."
+              title="Start Playing"
+              description="Create an account or play as guest. Your progress saves automatically."
             />
             <StepCard
               number={2}
