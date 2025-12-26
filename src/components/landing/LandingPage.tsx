@@ -100,6 +100,28 @@ export function LandingPage() {
         </div>
       </div>
 
+      {/* Game Showcase Section */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-stone-100 mb-4">
+            See It In Action
+          </h2>
+          <p className="text-stone-400 max-w-2xl mx-auto">
+            Explore an endless grid, flag mines, complete sectors, and watch
+            your territory grow.
+          </p>
+        </div>
+
+        <div className="relative rounded-2xl overflow-hidden border border-stone-700/50 shadow-2xl shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-900/80 via-transparent to-transparent pointer-events-none z-10" />
+          <img
+            src="/images/game-showcase.png"
+            alt="Infinite Minesweeper gameplay showing an expansive grid with completed sectors, flagged mines, and revealed numbers"
+            className="w-full h-auto"
+          />
+        </div>
+      </div>
+
       {/* Features Section */}
       <div className="max-w-6xl mx-auto px-4 pt-10 pb-20">
         <h2 className="text-3xl font-bold text-stone-100 text-center mb-12">
