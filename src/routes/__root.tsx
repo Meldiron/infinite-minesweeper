@@ -47,6 +47,63 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         title: 'Infinite Minesweeper',
       },
+      {
+        name: 'description',
+        content:
+          'Explore an endless minefield with no boundaries. Classic minesweeper gameplay meets infinite exploration.',
+      },
+      // Open Graph
+      {
+        property: 'og:title',
+        content: 'Infinite Minesweeper',
+      },
+      {
+        property: 'og:description',
+        content:
+          'Explore an endless minefield with no boundaries. Classic minesweeper gameplay meets infinite exploration.',
+      },
+      {
+        property: 'og:type',
+        content: 'website',
+      },
+      {
+        property: 'og:site_name',
+        content: 'Infinite Minesweeper',
+      },
+      {
+        property: 'og:image',
+        content: '/_api/og-image',
+      },
+      {
+        property: 'og:image:width',
+        content: '1200',
+      },
+      {
+        property: 'og:image:height',
+        content: '630',
+      },
+      {
+        property: 'og:image:type',
+        content: 'image/svg+xml',
+      },
+      // Twitter Card
+      {
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      },
+      {
+        name: 'twitter:title',
+        content: 'Infinite Minesweeper',
+      },
+      {
+        name: 'twitter:description',
+        content:
+          'Explore an endless minefield with no boundaries. Classic minesweeper gameplay meets infinite exploration.',
+      },
+      {
+        name: 'twitter:image',
+        content: '/_api/og-image',
+      },
     ],
     links: [
       {
