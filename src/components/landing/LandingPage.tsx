@@ -93,7 +93,7 @@ export function LandingPage() {
                 <span className="w-full border-t border-stone-600" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-stone-900 px-3 text-stone-500">or</span>
+                <span className="bg-stone-800 px-3 text-stone-500">or</span>
               </div>
             </div>
 
