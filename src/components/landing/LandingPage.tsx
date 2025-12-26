@@ -56,7 +56,7 @@ export function LandingPage() {
               <img
                 src="/favicon.svg"
                 alt="Infinite Minesweeper logo"
-                className="w-12 h-12"
+                className="w-20 h-20"
               />
             </div>
 
