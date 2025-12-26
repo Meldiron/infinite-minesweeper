@@ -1,4 +1,4 @@
-Welcome to your new TanStack app!!
+# Infinite Minesweeper
 
 # Getting Started
 
