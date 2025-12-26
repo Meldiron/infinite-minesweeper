@@ -20,7 +20,6 @@ import { Route as ProtectedExampleProtectedRouteRouteImport } from './routes/_pr
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignOutRouteImport } from './routes/_auth/sign-out'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
-import { Route as ApiOgImageRouteImport } from './routes/_api/og-image'
 import { Route as ApiHelloRouteImport } from './routes/_api/hello'
 
 const PublicRoute = PublicRouteImport.update({
@@ -76,11 +75,6 @@ const AuthSignInRoute = AuthSignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => AuthRoute,
 } as any)
-const ApiOgImageRoute = ApiOgImageRouteImport.update({
-  id: '/_api/og-image',
-  path: '/og-image',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiHelloRoute = ApiHelloRouteImport.update({
   id: '/_api/hello',
   path: '/hello',
@@ -89,7 +83,6 @@ const ApiHelloRoute = ApiHelloRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/hello': typeof ApiHelloRoute
-  '/og-image': typeof ApiOgImageRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-out': typeof AuthSignOutRoute
   '/sign-up': typeof AuthSignUpRoute
@@ -101,7 +94,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/hello': typeof ApiHelloRoute
-  '/og-image': typeof ApiOgImageRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-out': typeof AuthSignOutRoute
   '/sign-up': typeof AuthSignUpRoute
@@ -117,7 +109,6 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/_api/hello': typeof ApiHelloRoute
-  '/_api/og-image': typeof ApiOgImageRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-out': typeof AuthSignOutRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
@@ -131,7 +122,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/hello'
-    | '/og-image'
     | '/sign-in'
     | '/sign-out'
     | '/sign-up'
@@ -143,7 +133,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/hello'
-    | '/og-image'
     | '/sign-in'
     | '/sign-out'
     | '/sign-up'
@@ -158,7 +147,6 @@ export interface FileRouteTypes {
     | '/_protected'
     | '/_public'
     | '/_api/hello'
-    | '/_api/og-image'
     | '/_auth/sign-in'
     | '/_auth/sign-out'
     | '/_auth/sign-up'
@@ -174,7 +162,6 @@ export interface RootRouteChildren {
   ProtectedRoute: typeof ProtectedRouteWithChildren
   PublicRoute: typeof PublicRouteWithChildren
   ApiHelloRoute: typeof ApiHelloRoute
-  ApiOgImageRoute: typeof ApiOgImageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -256,13 +243,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignInRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_api/og-image': {
-      id: '/_api/og-image'
-      path: '/og-image'
-      fullPath: '/og-image'
-      preLoaderRoute: typeof ApiOgImageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_api/hello': {
       id: '/_api/hello'
       path: '/hello'
@@ -321,7 +301,6 @@ const rootRouteChildren: RootRouteChildren = {
   ProtectedRoute: ProtectedRouteWithChildren,
   PublicRoute: PublicRouteWithChildren,
   ApiHelloRoute: ApiHelloRoute,
-  ApiOgImageRoute: ApiOgImageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
