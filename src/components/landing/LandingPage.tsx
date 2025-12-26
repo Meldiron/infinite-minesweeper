@@ -115,7 +115,7 @@ export function LandingPage() {
         <div className="relative rounded-2xl overflow-hidden border border-stone-700/50 shadow-2xl shadow-black/50">
           <div className="absolute inset-0 bg-gradient-to-t from-stone-900/80 via-transparent to-transparent pointer-events-none z-10" />
           <img
-            src="/images/game-showcase.png"
+            src="/images/game-showcase2.png"
             alt="Infinite Minesweeper gameplay showing an expansive grid with completed sectors, flagged mines, and revealed numbers"
             className="w-full h-auto"
           />
@@ -184,7 +184,7 @@ export function LandingPage() {
             <div className="relative">
               <div className="rounded-2xl overflow-hidden border border-stone-700/50 shadow-2xl shadow-black/50">
                 <img
-                  src="/images/board-export.png"
+                  src="/images/board-export2.png"
                   alt="PNG export showing player territory map with 1.1% explored, displaying completed sectors in green and unexplored areas"
                   className="w-full h-auto"
                 />
