@@ -53,13 +53,11 @@ export function LandingPage() {
         <div className="relative max-w-6xl mx-auto px-4 py-20 sm:py-32">
           <div className="text-center">
             <div className="flex justify-center mb-6">
-              <div className="bg-amber-600/20 p-4 rounded-2xl">
-                <img
-                  src="/favicon.svg"
-                  alt="Infinite Minesweeper logo"
-                  className="w-12 h-12"
-                />
-              </div>
+              <img
+                src="/favicon.svg"
+                alt="Infinite Minesweeper logo"
+                className="w-12 h-12"
+              />
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-bold text-stone-100 mb-6">
