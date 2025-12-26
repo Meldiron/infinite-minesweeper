@@ -152,6 +152,50 @@ export function LandingPage() {
         </div>
       </div>
 
+      {/* Challenge Section - Can you achieve 100%? */}
+      <div className="bg-stone-800/30 py-20">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Text Content */}
+            <div className="text-center md:text-left">
+              <h2 className="text-4xl font-bold text-stone-100 mb-4">
+                Can You Achieve <span className="text-green-500">100%</span>?
+              </h2>
+              <p className="text-stone-400 text-lg mb-6">
+                The grid is infinite, but your progress is tracked. Export your
+                territory map as a PNG and share your exploration journey with
+                the world.
+              </p>
+              <p className="text-stone-500 mb-8">
+                Every completed sector brings you closer to total domination.
+                How far can you push the boundaries?
+              </p>
+              <Link to="/sign-up">
+                <Button
+                  size="lg"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8"
+                >
+                  Start Your Journey
+                </Button>
+              </Link>
+            </div>
+
+            {/* PNG Export Preview */}
+            <div className="relative">
+              <div className="rounded-2xl overflow-hidden border border-stone-700/50 shadow-2xl shadow-black/50">
+                <img
+                  src="/images/board-export.png"
+                  alt="PNG export showing player territory map with 1.1% explored, displaying completed sectors in green and unexplored areas"
+                  className="w-full h-auto"
+                />
+              </div>
+              {/* Decorative glow */}
+              <div className="absolute -inset-4 bg-green-500/10 rounded-3xl blur-2xl -z-10" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Leaderboard Section */}
       <div className="bg-stone-800/50 py-20">
         <div className="max-w-4xl mx-auto px-4">
