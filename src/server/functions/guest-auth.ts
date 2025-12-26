@@ -8,6 +8,7 @@ import {
   getCookie,
   setCookie,
 } from '@tanstack/react-start/server'
+import { db, Query, Permission, Role } from './db-helper'
 
 // Helper to get session (duplicated from auth.ts since we can't import private functions)
 const getSession = () => {
@@ -29,6 +30,61 @@ const setSessionCookies = (id: string, secret: string) => {
   })
 }
 
+// Generate a random guest nickname
+const generateGuestNickname = (): string => {
+  const adjectives = [
+    'Swift',
+    'Brave',
+    'Clever',
+    'Lucky',
+    'Mighty',
+    'Silent',
+    'Bold',
+    'Quick',
+    'Sharp',
+    'Keen',
+    'Wild',
+    'Calm',
+    'Fierce',
+    'Noble',
+    'Sly',
+    'Wise',
+    'Daring',
+    'Nimble',
+    'Stealthy',
+    'Valiant',
+    'Crafty',
+    'Agile',
+    'Fearless',
+  ]
+  const nouns = [
+    'Miner',
+    'Seeker',
+    'Scout',
+    'Hunter',
+    'Explorer',
+    'Finder',
+    'Sweeper',
+    'Digger',
+    'Tracker',
+    'Ranger',
+    'Pioneer',
+    'Voyager',
+    'Pathfinder',
+    'Adventurer',
+    'Wanderer',
+    'Prospector',
+    'Surveyor',
+    'Navigator',
+  ]
+
+  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)]
+  const noun = nouns[Math.floor(Math.random() * nouns.length)]
+  const number = Math.floor(Math.random() * 1000)
+
+  return `${adjective}${noun}${number}`
+}
+
 // Create anonymous session for guest play
 export const createAnonymousSessionFn = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ redirect: z.string().optional() }))
@@ -39,19 +95,64 @@ export const createAnonymousSessionFn = createServerFn({ method: 'POST' })
       const { account } = createAdminClient()
       const session = await account.createAnonymousSession()
       setSessionCookies(session.$id, session.secret)
+
+      // Generate a unique nickname for the guest
+      let nickname = generateGuestNickname()
+      let attempts = 0
+      const maxAttempts = 10
+
+      // Ensure nickname is unique
+      while (attempts < maxAttempts) {
+        const existing = await db.userOnboarding.list([
+          Query.equal('nickname', [nickname]),
+          Query.limit(1),
+        ])
+
+        if (existing.rows.length === 0) {
+          break
+        }
+
+        nickname = generateGuestNickname()
+        attempts++
+      }
+
+      // Create onboarding record with auto-generated nickname
+      await db.userOnboarding.create({
+        createdBy: session.userId,
+        nickname,
+        onboardingCompleted: true,
+      })
+
+      // Create userStats record for leaderboard
+      await db.userStats.create(
+        {
+          createdBy: session.userId,
+          nickname,
+          tilesOpened: 0,
+        },
+        {
+          permissions: [
+            Permission.read(Role.any()),
+            Permission.write(Role.user(session.userId)),
+            Permission.update(Role.user(session.userId)),
+            Permission.delete(Role.user(session.userId)),
+          ],
+        },
+      )
     } catch (_error) {
       const error = _error as AppwriteException
-      setResponseStatus(error.code)
+      setResponseStatus(error.code || 500)
       throw {
         message: error.message,
-        status: error.code,
+        status: error.code || 500,
       }
     }
 
+    // Redirect directly to play (skip onboarding)
     if (redirectUrl) {
       throw redirect({ to: redirectUrl })
     } else {
-      throw redirect({ to: '/' })
+      throw redirect({ to: '/play' })
     }
   })
 

@@ -9,7 +9,9 @@ interface GuestPlayButtonProps {
   redirectTo?: string
 }
 
-export function GuestPlayButton({ redirectTo }: GuestPlayButtonProps) {
+export function GuestPlayButton({
+  redirectTo = '/play',
+}: GuestPlayButtonProps) {
   const navigate = useNavigate()
   const router = useRouter()
   const createAnonymousSession = useServerFn(createAnonymousSessionFn)
@@ -22,9 +24,7 @@ export function GuestPlayButton({ redirectTo }: GuestPlayButtonProps) {
     },
     onSuccess: async () => {
       await router.invalidate()
-      if (redirectTo) {
-        navigate({ to: redirectTo })
-      }
+      navigate({ to: redirectTo })
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: async (error: any) => {
@@ -35,9 +35,7 @@ export function GuestPlayButton({ redirectTo }: GuestPlayButtonProps) {
         error?.message?.includes('redirect')
       ) {
         await router.invalidate()
-        if (redirectTo) {
-          navigate({ to: redirectTo })
-        }
+        navigate({ to: redirectTo })
         return
       }
       console.error('Guest play error:', error)

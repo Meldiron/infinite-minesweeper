@@ -99,7 +99,7 @@ export function LandingPage() {
 
             {/* Guest play button */}
             <div className="max-w-xs mx-auto">
-              <GuestPlayButton redirectTo="/onboarding" />
+              <GuestPlayButton redirectTo="/play" />
             </div>
           </div>
         </div>

@@ -21,7 +21,7 @@ export function AuthCard({
   description,
   children,
   showGuestOption = true,
-  guestRedirectTo = '/onboarding',
+  guestRedirectTo = '/play',
 }: AuthCardProps) {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-stone-900 p-6 overflow-hidden">
