@@ -54,7 +54,11 @@ export function LandingPage() {
           <div className="text-center">
             <div className="flex justify-center mb-6">
               <div className="bg-amber-600/20 p-4 rounded-2xl">
-                <Grid3X3 size={48} className="text-amber-500" />
+                <img
+                  src="/favicon.svg"
+                  alt="Infinite Minesweeper logo"
+                  className="w-12 h-12"
+                />
               </div>
             </div>
 
