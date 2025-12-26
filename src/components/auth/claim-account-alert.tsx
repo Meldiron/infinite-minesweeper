@@ -98,7 +98,7 @@ export function ClaimAccountAlert({ onDismiss }: ClaimAccountAlertProps) {
   return (
     <>
       {/* Single-row alert bar */}
-      <div className="absolute top-0 left-0 right-0 z-50 bg-amber-950/95 backdrop-blur-sm border-b-2 border-amber-500 px-3 py-2">
+      <div className="absolute top-0 left-0 right-0 z-50 bg-amber-950/80 backdrop-blur-md border-b border-amber-500 px-3 py-2">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-amber-100 min-w-0">
             <UserPlus size={16} className="text-amber-400 flex-shrink-0" />
