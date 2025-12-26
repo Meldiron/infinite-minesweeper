@@ -92,7 +92,9 @@ export function LandingPage() {
               <p className="text-stone-500 text-sm mb-3">
                 Just want to try it out?
               </p>
-              <GuestPlayButton redirectTo="/play" />
+              <div className="inline-block">
+                <GuestPlayButton redirectTo="/play" />
+              </div>
             </div>
           </div>
         </div>
