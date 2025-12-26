@@ -8,6 +8,13 @@ import { z } from 'zod'
 import { X, UserPlus, Loader2, AlertCircle, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { claimAccountFn } from '@/server/functions/guest-auth'
 
 const claimSchema = z
@@ -28,7 +35,7 @@ interface ClaimAccountAlertProps {
 }
 
 export function ClaimAccountAlert({ onDismiss }: ClaimAccountAlertProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDismissed, setIsDismissed] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const router = useRouter()
@@ -51,6 +58,7 @@ export function ClaimAccountAlert({ onDismiss }: ClaimAccountAlertProps) {
     },
     onSuccess: async () => {
       setIsSuccess(true)
+      setIsModalOpen(false)
       await router.invalidate()
       // Auto-hide after success
       setTimeout(() => {
@@ -88,127 +96,133 @@ export function ClaimAccountAlert({ onDismiss }: ClaimAccountAlertProps) {
   }
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-50 bg-amber-900/95 backdrop-blur-sm border-b border-amber-700">
-      <div className="max-w-2xl mx-auto px-4 py-3">
-        {!isExpanded ? (
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-amber-100">
-              <UserPlus size={18} className="text-amber-400 flex-shrink-0" />
-              <span className="text-sm">
-                <span className="font-medium">Playing as guest.</span>{' '}
-                <span className="text-amber-200/80">
-                  Add email & password to save your progress permanently.
-                </span>
+    <>
+      {/* Single-row alert bar */}
+      <div className="absolute top-0 left-0 right-0 z-50 bg-amber-900/95 backdrop-blur-sm border-b border-amber-700 px-4 py-2.5">
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-amber-100 min-w-0">
+            <UserPlus size={18} className="text-amber-400 flex-shrink-0" />
+            <span className="text-sm truncate">
+              <span className="font-medium">Playing as guest.</span>{' '}
+              <span className="text-amber-200/80 hidden sm:inline">
+                Add email & password to save your progress.
               </span>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="bg-amber-700 hover:bg-amber-600 text-amber-100 border-0 h-8 px-3 text-xs"
-                onClick={() => setIsExpanded(true)}
-              >
-                Claim Account
-              </Button>
-              <button
-                onClick={handleDismiss}
-                className="text-amber-400 hover:text-amber-200 p-1"
-                aria-label="Dismiss"
-              >
-                <X size={18} />
-              </button>
-            </div>
+            </span>
           </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-amber-100">
-                <UserPlus size={18} className="text-amber-400" />
-                <span className="font-medium text-sm">Claim Your Account</span>
-              </div>
-              <button
-                onClick={() => setIsExpanded(false)}
-                className="text-amber-400 hover:text-amber-200 p-1"
-                aria-label="Collapse"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form
-              onSubmit={form.handleSubmit((data) => claimMutation.mutate(data))}
-              className="space-y-3"
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="bg-amber-700 hover:bg-amber-600 text-amber-100 border-0 h-7 px-3 text-xs"
+              onClick={() => setIsModalOpen(true)}
             >
-              {form.formState.errors.root && (
-                <div className="flex items-center gap-2 text-red-300 text-sm bg-red-900/50 rounded px-3 py-2">
-                  <AlertCircle size={16} />
-                  {form.formState.errors.root.message}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <Input
-                    type="email"
-                    placeholder="Email address"
-                    className="bg-stone-800 border-stone-600 text-stone-100 placeholder:text-stone-500 h-9 text-sm"
-                    {...form.register('email')}
-                  />
-                  {form.formState.errors.email && (
-                    <p className="text-red-300 text-xs mt-1">
-                      {form.formState.errors.email.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Input
-                    type="password"
-                    placeholder="Password (8+ chars)"
-                    className="bg-stone-800 border-stone-600 text-stone-100 placeholder:text-stone-500 h-9 text-sm"
-                    {...form.register('password')}
-                  />
-                  {form.formState.errors.password && (
-                    <p className="text-red-300 text-xs mt-1">
-                      {form.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Input
-                    type="password"
-                    placeholder="Confirm password"
-                    className="bg-stone-800 border-stone-600 text-stone-100 placeholder:text-stone-500 h-9 text-sm"
-                    {...form.register('confirmPassword')}
-                  />
-                  {form.formState.errors.confirmPassword && (
-                    <p className="text-red-300 text-xs mt-1">
-                      {form.formState.errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={claimMutation.isPending}
-                  className="bg-amber-600 hover:bg-amber-500 text-white h-8 px-4 text-xs"
-                >
-                  {claimMutation.isPending ? (
-                    <>
-                      <Loader2 size={14} className="mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Account'
-                  )}
-                </Button>
-              </div>
-            </form>
+              Claim Account
+            </Button>
+            <button
+              onClick={handleDismiss}
+              className="text-amber-400 hover:text-amber-200 p-1"
+              aria-label="Dismiss"
+            >
+              <X size={18} />
+            </button>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+
+      {/* Claim account modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="bg-stone-800 border-stone-700 text-stone-100 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-stone-100">
+              <UserPlus size={20} className="text-amber-400" />
+              Claim Your Account
+            </DialogTitle>
+            <DialogDescription className="text-stone-400">
+              Add an email and password to save your progress permanently and
+              access your account from any device.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={form.handleSubmit((data) => claimMutation.mutate(data))}
+            className="space-y-4 mt-2"
+          >
+            {form.formState.errors.root && (
+              <div className="flex items-center gap-2 text-red-300 text-sm bg-red-900/50 rounded px-3 py-2">
+                <AlertCircle size={16} />
+                {form.formState.errors.root.message}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email address"
+                  className="bg-stone-900 border-stone-600 text-stone-100 placeholder:text-stone-500"
+                  {...form.register('email')}
+                />
+                {form.formState.errors.email && (
+                  <p className="text-red-400 text-xs mt-1">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Password (8+ characters)"
+                  className="bg-stone-900 border-stone-600 text-stone-100 placeholder:text-stone-500"
+                  {...form.register('password')}
+                />
+                {form.formState.errors.password && (
+                  <p className="text-red-400 text-xs mt-1">
+                    {form.formState.errors.password.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Confirm password"
+                  className="bg-stone-900 border-stone-600 text-stone-100 placeholder:text-stone-500"
+                  {...form.register('confirmPassword')}
+                />
+                {form.formState.errors.confirmPassword && (
+                  <p className="text-red-400 text-xs mt-1">
+                    {form.formState.errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-stone-400 hover:text-stone-100 hover:bg-stone-700"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={claimMutation.isPending}
+                className="bg-amber-600 hover:bg-amber-500 text-white"
+              >
+                {claimMutation.isPending ? (
+                  <>
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Account'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
