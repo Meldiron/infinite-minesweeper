@@ -1,317 +1,86 @@
 # Infinite Minesweeper
 
-# Getting Started
+Minesweeper on a grid with no edges. Reveal cells, flag mines, and turn 8×8 sectors green by clearing them completely. Your board is saved to your account, so the territory keeps growing between sessions.
 
-To run this application:
+**Play it at [minesweeper.almostapps.eu](https://minesweeper.almostapps.eu/)**
+
+![Finishing a sector, zooming out to the sector map, and jumping back in](docs/demo.gif)
+
+## How it plays
+
+- **The grid never ends.** Mines are placed by a hash of each cell's coordinates and a per-game seed, so any part of the board can be generated on demand and it is the same every time you come back.
+- **Your first click is always safe.** It clears the mines in a 5×5 area around the cell, which guarantees an opening to start from.
+- **Sectors.** The board is split into 8×8 sectors. A sector is finished when every safe cell is revealed and every mine is flagged (or was hit), and it turns green.
+- **Five lives.** Hitting a mine costs a life instead of ending the game. A life comes back every 3 minutes, including while you are away. At zero lives you wait for the next one.
+- **Zoom from 10% to 200%.** At 50% and below the board switches to a sector map: grey for untouched, lighter grey for in progress, green for finished. Clicking a sector flies you back in to it.
+- **Map export.** At 10% zoom you can download your territory as a PNG: 100×100 sectors around the start, with your nickname, tiles cleared, sectors finished, and the percentage explored.
+- **Auto-save and multiple devices.** Progress saves one second after your last move. If another device saved in the meantime, the game asks which save to keep.
+- **Leaderboard** ranked by tiles opened.
+- **Guest play.** Play without an account under a generated nickname, then add an email and password later to keep the progress.
+- **Phones.** Tap to reveal, long-press to flag, and a switch at the bottom swaps the two. Pinch to zoom.
+
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Gameplay at 70% zoom with finished sectors on the left and the unexplored edge on the right](docs/screenshots/gameplay.png) | ![Two lives lost, with the countdown to the next life in the top bar](docs/screenshots/gameplay-lives.png) |
+| The edge of a finished area. Green sectors are done; the grey ones on the right are still being worked on. | Lost lives regenerate one at a time, with the countdown next to the hearts. |
+| ![Sector map at 20% zoom](docs/screenshots/sector-map.png) | ![Sector map at 10% zoom with the export button](docs/screenshots/sector-map-export.png) |
+| Zoomed out, every sector becomes one block. | At 10% the whole territory fits on screen and the PNG export appears. |
+| ![Out of lives overlay with a timer](docs/screenshots/out-of-lives.png) | ![Save conflict dialog comparing the server save and this device](docs/screenshots/save-conflict.png) |
+| Out of lives: the board locks until a life comes back. | Played on two devices? Pick which save wins. |
+| ![Leaderboard with the signed-in player's rank](docs/screenshots/leaderboard.png) | ![Landing page](docs/screenshots/landing-hero.png) |
+| Leaderboard, with your own rank pinned on top. | Landing page with sign up, sign in, and guest play. |
+| ![Sign up form with a guest option](docs/screenshots/sign-up.png) | ![Choosing a nickname, with an availability check](docs/screenshots/onboarding.png) |
+| Sign up with email and password, or skip it. | New accounts pick a unique nickname for the leaderboard. |
+| ![Guest banner and the claim account dialog](docs/screenshots/guest-claim.png) | <img src="docs/screenshots/map-export.png" alt="Exported territory map PNG" width="360"> |
+| Guests can claim their account at any time without losing progress. | An exported map, ready to share. |
+
+<p align="center">
+  <img src="docs/screenshots/mobile-play.png" alt="Gameplay on a phone in reveal mode" width="280">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/mobile-flag-mode.png" alt="Gameplay on a phone in flag mode" width="280">
+</p>
+<p align="center">On a phone, the switch at the bottom flips taps between revealing and flagging.</p>
+
+## Tech stack
+
+- [TanStack Start](https://tanstack.com/start) with React 19, file-based routing and server functions
+- [Tailwind CSS](https://tailwindcss.com/) v4 and [shadcn/ui](https://ui.shadcn.com/) components
+- The board is drawn on a single `<canvas>`. Below 50% zoom it draws one block per sector instead of individual cells
+- [Appwrite](https://appwrite.io/) for accounts (email and password, anonymous guest sessions) and the database: saves, preferences, nicknames, and leaderboard stats
+- [Bun](https://bun.sh/) for installing, running, and the production server (`server.ts`)
+
+The game logic lives in [`src/components/minesweeper`](src/components/minesweeper): `useInfiniteGrid.ts` holds the rules (mine placement, flood fill, chording, sectors, lives), `CanvasRenderer.tsx` draws the board, and `MinesweeperGame.tsx` handles input, zoom, saving, and the PNG export. Server functions that talk to Appwrite are in [`src/server/functions`](src/server/functions).
+
+## Running locally
+
+You need [Bun](https://bun.sh/) and an Appwrite project.
 
 ```bash
 bun install
-bunx --bun run start
+cp .env.example .env   # then fill in the values below
+bun run dev            # http://localhost:3000
 ```
 
-## Environment Variables
+| Variable | Description |
+| --- | --- |
+| `APPWRITE_ENDPOINT` | Your Appwrite endpoint, for example `https://cloud.appwrite.io/v1` |
+| `APPWRITE_PROJECT_ID` | Project ID |
+| `APPWRITE_API_KEY` | Server API key with access to auth and databases |
+| `APPWRITE_DB_ID` | Optional, defaults to `imagine-project-db` |
+| `APPWRITE_BUCKET_ID` | Optional, only read by the storage helper in `src/server/lib/storage.ts`, which the game does not use |
+| `VITE_INSTRUMENTATION_SCRIPT_SRC` | Optional analytics script URL |
 
-Copy `.env.example` to `.env` before running the app and provide values for the required secrets:
+The database and its four collections (`minesweeper_saves`, `user_preferences`, `user_onboarding`, `user_stats`) are defined in [`appwrite.json`](appwrite.json). Change `projectId` to your project and push them with the [Appwrite CLI](https://appwrite.io/docs/tooling/command-line/installation).
 
-- `APPWRITE_ENDPOINT` – Base URL of your Appwrite instance.
-- `APPWRITE_API_KEY` – API key with permissions for the configured project.
-- `APPWRITE_BUCKET_ID` – Identifier of the storage bucket used by the app.
-- `APPWRITE_PROJECT_ID` – Appwrite project ID exposed to the client build.
-- `VITE_INSTRUMENTATION_SCRIPT_SRC` – Script URL injected for analytics/instrumentation.
-
-The app will fail to authenticate or access storage until these values are set.
-
-# Building For Production
-
-To build this application for production:
+Other scripts:
 
 ```bash
-bunx --bun run build
+bun run build   # type-check and build into dist/
+bun run start   # serve dist/ with the Bun server in server.ts
 ```
 
-## Testing
+## Credits
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
-```bash
-bunx --bun run test
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-## Linting & Formatting
-
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
-
-```bash
-bunx --bun run lint
-bunx --bun run format
-bunx --bun run check
-```
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
-
-```bash
-pnpx shadcn@latest add button
-```
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add another a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from '@tanstack/react-router'
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import { Link } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
-```
-
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/people',
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json() as Promise<{
-      results: {
-        name: string
-      }[]
-    }>
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData()
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    )
-  },
-})
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
-
-```bash
-bun install @tanstack/react-query @tanstack/react-query-devtools
-```
-
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
-
-```tsx
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-
-// ...
-
-const queryClient = new QueryClient()
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
-  )
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from '@tanstack/react-query'
-
-import './App.css'
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ['people'],
-    queryFn: () =>
-      fetch('https://swapi.dev/api/people')
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  })
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-export default App
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
-```bash
-bun install @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from '@tanstack/react-store'
-import { Store } from '@tanstack/store'
-import './App.css'
-
-const countStore = new Store(0)
-
-function App() {
-  const count = useStore(countStore)
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  )
-}
-
-export default App
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from '@tanstack/react-store'
-import { Store, Derived } from '@tanstack/store'
-import './App.css'
-
-const countStore = new Store(0)
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-})
-doubledStore.mount()
-
-function App() {
-  const count = useStore(countStore)
-  const doubledCount = useStore(doubledStore)
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  )
-}
-
-export default App
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+Built with [Imagine](https://imagine.dev/), the AI web builder from [Appwrite](https://appwrite.io/), as one of the projects I made while QA testing it.
