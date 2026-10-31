@@ -14,7 +14,7 @@ import {
 import {
   checkNicknameAvailableFn,
   completeOnboardingFn,
-} from '@/server/functions/onboarding'
+} from '@/lib/api/onboarding'
 
 export function OnboardingPage() {
   const router = useRouter()

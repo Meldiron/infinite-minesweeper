@@ -14,8 +14,7 @@ import { z } from 'zod'
 import { AuthCard } from '@/components/auth/auth-card'
 import { AuthForm } from '@/components/auth/auth-form'
 import { AuthField } from '@/components/auth/auth-field'
-import { signUpFn } from '@/server/functions/auth'
-import { useServerFn } from '@tanstack/react-start'
+import { signUpFn } from '@/lib/api/auth'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
@@ -43,7 +42,7 @@ function SignUpPage() {
   const search = useSearch({ from: '/_auth/sign-up' })
   const navigate = useNavigate()
   const router = useRouter()
-  const signUp = useServerFn(signUpFn)
+  const signUp = signUpFn
   const form = useForm({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -56,33 +55,15 @@ function SignUpPage() {
   const signUpMutation = useMutation({
     mutationFn: async (data: z.infer<typeof signUpSchema>) => {
       await signUp({
-        data: { ...data, redirect: search.redirect },
+        data: { email: data.email, password: data.password },
       })
     },
     onSuccess: async () => {
-      // Invalidate router to refresh auth state
       await router.invalidate()
-      // Navigate to the redirect destination if provided
-      if (search.redirect) {
-        navigate({ to: search.redirect })
-      }
+      navigate({ to: search.redirect ?? '/onboarding' })
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: async (error: any) => {
-      // Check if it's a redirect error (TanStack Start throws redirects as errors)
-      if (
-        error?.status === 302 ||
-        error?.redirect ||
-        error?.message?.includes('redirect')
-      ) {
-        // Invalidate router to refresh auth state
-        await router.invalidate()
-        // Navigate to the redirect destination if provided
-        if (search.redirect) {
-          navigate({ to: search.redirect })
-        }
-        return
-      }
       console.error('Sign up error:', error)
       form.setError('root', { message: error.message || 'Failed to sign up' })
     },

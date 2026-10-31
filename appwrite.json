@@ -306,5 +306,23 @@
       ]
     }
   ],
-  "projectName": "Infinite Minesweeper"
+  "projectName": "Infinite Minesweeper",
+  "functions": [
+    {
+      "$id": "game",
+      "name": "Game",
+      "runtime": "node-22",
+      "path": "functions/game",
+      "entrypoint": "src/main.js",
+      "commands": "npm install",
+      "execute": ["users"],
+      "events": [
+        "databases.imagine-project-db.tables.minesweeper_saves.rows.*.update"
+      ],
+      "scopes": ["rows.read", "rows.write"],
+      "timeout": 15,
+      "logging": true,
+      "enabled": true
+    }
+  ]
 }

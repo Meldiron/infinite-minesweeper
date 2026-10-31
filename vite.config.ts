@@ -1,34 +1,21 @@
 import { defineConfig } from 'vite'
-import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
-import devtoolsJson from 'vite-plugin-devtools-json'
-import { nitroV2Plugin } from '@tanstack/nitro-v2-vite-plugin'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
-const forSites = process.env?.FOR_SITES === 'true'
-
-const config = defineConfig({
+// A static single-page app: `vite build` writes everything to dist/.
+export default defineConfig({
   plugins: [
-    // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
-    tanstackStart(),
-    forSites &&
-      nitroV2Plugin({
-        compatibilityDate: '2025-10-08',
-        preset: 'node',
-      }),
-    devtoolsJson(),
+    tanstackRouter({ target: 'react', autoCodeSplitting: true }),
     viteReact(),
   ],
   server: {
     host: '::',
     allowedHosts: true,
-    hmr: true,
   },
 })
-
-export default config

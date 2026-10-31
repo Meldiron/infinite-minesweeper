@@ -24,14 +24,13 @@ import {
   Check,
   AlertCircle,
 } from 'lucide-react'
-import { useServerFn } from '@tanstack/react-start'
 import {
   saveGameFn,
   deleteGameSaveFn,
   saveUserPreferencesFn,
   checkSaveConflictFn,
   forceSaveGameFn,
-} from '@/server/functions/minesweeper'
+} from '@/lib/api/minesweeper'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
   AlertDialog,
@@ -168,11 +167,11 @@ export function MinesweeperGame({
   const isPinchingRef = useRef<boolean>(false)
   const animationFrameRef = useRef<number | null>(null)
 
-  const saveGame = useServerFn(saveGameFn)
-  const deleteGameSave = useServerFn(deleteGameSaveFn)
-  const savePreferences = useServerFn(saveUserPreferencesFn)
-  const checkSaveConflict = useServerFn(checkSaveConflictFn)
-  const forceSaveGame = useServerFn(forceSaveGameFn)
+  const saveGame = saveGameFn
+  const deleteGameSave = deleteGameSaveFn
+  const savePreferences = saveUserPreferencesFn
+  const checkSaveConflict = checkSaveConflictFn
+  const forceSaveGame = forceSaveGameFn
 
   const {
     getCellState,

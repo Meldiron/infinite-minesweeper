@@ -2,12 +2,9 @@ import { useState, type CSSProperties } from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { MinesweeperGame } from '@/components/minesweeper/MinesweeperGame'
 import { ClaimAccountAlert } from '@/components/auth'
-import {
-  getGameSaveFn,
-  getUserPreferencesFn,
-} from '@/server/functions/minesweeper'
-import { getOnboardingStatusFn } from '@/server/functions/onboarding'
-import { isAnonymousUserFn } from '@/server/functions/guest-auth'
+import { getGameSaveFn, getUserPreferencesFn } from '@/lib/api/minesweeper'
+import { getOnboardingStatusFn } from '@/lib/api/onboarding'
+import { isAnonymousUserFn } from '@/lib/api/guest-auth'
 
 export const Route = createFileRoute('/_protected/play')({
   component: PlayPage,

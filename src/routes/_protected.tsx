@@ -1,7 +1,7 @@
 import { redirect } from '@tanstack/react-router'
 import { createFileRoute } from '@tanstack/react-router'
-import { authMiddleware } from '@/server/functions/auth'
-import { getOnboardingStatusFn } from '@/server/functions/onboarding'
+import { authMiddleware } from '@/lib/api/auth'
+import { getOnboardingStatusFn } from '@/lib/api/onboarding'
 
 export const Route = createFileRoute('/_protected')({
   loader: async ({ location }) => {

@@ -14,8 +14,7 @@ import { z } from 'zod'
 import { AuthCard } from '@/components/auth/auth-card'
 import { AuthForm } from '@/components/auth/auth-form'
 import { AuthField } from '@/components/auth/auth-field'
-import { signInFn } from '@/server/functions/auth'
-import { useServerFn } from '@tanstack/react-start'
+import { signInFn } from '@/lib/api/auth'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
@@ -37,7 +36,7 @@ function SignInPage() {
   const search = useSearch({ from: '/_auth/sign-in' })
   const navigate = useNavigate()
   const router = useRouter()
-  const signIn = useServerFn(signInFn)
+  const signIn = signInFn
   const form = useForm({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -49,33 +48,15 @@ function SignInPage() {
   const signInMutation = useMutation({
     mutationFn: async (data: z.infer<typeof signInSchema>) => {
       await signIn({
-        data: { ...data, redirect: search.redirect },
+        data: { email: data.email, password: data.password },
       })
     },
     onSuccess: async () => {
-      // Invalidate router to refresh auth state
       await router.invalidate()
-      // Navigate to the redirect destination if provided
-      if (search.redirect) {
-        navigate({ to: search.redirect })
-      }
+      navigate({ to: search.redirect ?? '/play' })
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: async (error: any) => {
-      // Check if it's a redirect error (TanStack Start throws redirects as errors)
-      if (
-        error?.status === 302 ||
-        error?.redirect ||
-        error?.message?.includes('redirect')
-      ) {
-        // Invalidate router to refresh auth state
-        await router.invalidate()
-        // Navigate to the redirect destination if provided
-        if (search.redirect) {
-          navigate({ to: search.redirect })
-        }
-        return
-      }
       console.error('Sign in error:', error)
       form.setError('root', { message: error.message || 'Failed to sign in' })
     },

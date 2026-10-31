@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useServerFn } from '@tanstack/react-start'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -24,7 +23,7 @@ import {
 import {
   getLeaderboardDataFn,
   getLeaderboardFn,
-} from '@/server/functions/leaderboard'
+} from '@/lib/api/leaderboard'
 import { useAuth } from '@/hooks/use-auth'
 
 type LeaderboardEntry = {
@@ -53,8 +52,8 @@ export function LeaderboardPage() {
 
   const { currentUser } = useAuth()
 
-  const getLeaderboardData = useServerFn(getLeaderboardDataFn)
-  const getLeaderboard = useServerFn(getLeaderboardFn)
+  const getLeaderboardData = getLeaderboardDataFn
+  const getLeaderboard = getLeaderboardFn
 
   // Initial load - single optimized request
   useEffect(() => {

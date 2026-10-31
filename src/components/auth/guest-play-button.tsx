@@ -1,8 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { useServerFn } from '@tanstack/react-start'
 import { Button } from '@/components/ui/button'
-import { createAnonymousSessionFn } from '@/server/functions/guest-auth'
+import { createAnonymousSessionFn } from '@/lib/api/guest-auth'
 import { User } from 'lucide-react'
 
 interface GuestPlayButtonProps {
@@ -14,30 +13,17 @@ export function GuestPlayButton({
 }: GuestPlayButtonProps) {
   const navigate = useNavigate()
   const router = useRouter()
-  const createAnonymousSession = useServerFn(createAnonymousSessionFn)
+  const createAnonymousSession = createAnonymousSessionFn
 
   const guestMutation = useMutation({
     mutationFn: async () => {
-      await createAnonymousSession({
-        data: { redirect: redirectTo },
-      })
+      await createAnonymousSession()
     },
     onSuccess: async () => {
       await router.invalidate()
       navigate({ to: redirectTo })
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: async (error: any) => {
-      // Check if it's a redirect (TanStack Start throws redirects as errors)
-      if (
-        error?.status === 302 ||
-        error?.redirect ||
-        error?.message?.includes('redirect')
-      ) {
-        await router.invalidate()
-        navigate({ to: redirectTo })
-        return
-      }
+    onError: (error) => {
       console.error('Guest play error:', error)
     },
   })

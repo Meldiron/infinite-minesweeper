@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
-import { useServerFn } from '@tanstack/react-start'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -15,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { claimAccountFn } from '@/server/functions/guest-auth'
+import { claimAccountFn } from '@/lib/api/guest-auth'
 
 const claimSchema = z
   .object({
@@ -39,7 +38,7 @@ export function ClaimAccountAlert({ onDismiss }: ClaimAccountAlertProps) {
   const [isDismissed, setIsDismissed] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const router = useRouter()
-  const claimAccount = useServerFn(claimAccountFn)
+  const claimAccount = claimAccountFn
 
   const form = useForm<ClaimFormData>({
     resolver: zodResolver(claimSchema),

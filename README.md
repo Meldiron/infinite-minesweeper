@@ -21,20 +21,20 @@ Minesweeper on a grid with no edges. Reveal cells, flag mines, and turn 8×8 sec
 
 ## Screenshots
 
-| | |
-| --- | --- |
+|                                                                                                                               |                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | ![Gameplay at 70% zoom with finished sectors on the left and the unexplored edge on the right](docs/screenshots/gameplay.png) | ![Two lives lost, with the countdown to the next life in the top bar](docs/screenshots/gameplay-lives.png) |
-| The edge of a finished area. Green sectors are done; the grey ones on the right are still being worked on. | Lost lives regenerate one at a time, with the countdown next to the hearts. |
-| ![Sector map at 20% zoom](docs/screenshots/sector-map.png) | ![Sector map at 10% zoom with the export button](docs/screenshots/sector-map-export.png) |
-| Zoomed out, every sector becomes one block. | At 10% the whole territory fits on screen and the PNG export appears. |
-| ![Out of lives overlay with a timer](docs/screenshots/out-of-lives.png) | ![Save conflict dialog comparing the server save and this device](docs/screenshots/save-conflict.png) |
-| Out of lives: the board locks until a life comes back. | Played on two devices? Pick which save wins. |
-| ![Leaderboard with the signed-in player's rank](docs/screenshots/leaderboard.png) | ![Landing page](docs/screenshots/landing-hero.png) |
-| Leaderboard, with your own rank pinned on top. | Landing page with sign up, sign in, and guest play. |
-| ![Sign up form with a guest option](docs/screenshots/sign-up.png) | ![Choosing a nickname, with an availability check](docs/screenshots/onboarding.png) |
-| Sign up with email and password, or skip it. | New accounts pick a unique nickname for the leaderboard. |
-| ![Guest banner and the claim account dialog](docs/screenshots/guest-claim.png) | <img src="docs/screenshots/map-export.png" alt="Exported territory map PNG" width="360"> |
-| Guests can claim their account at any time without losing progress. | An exported map, ready to share. |
+| The edge of a finished area. Green sectors are done; the grey ones on the right are still being worked on.                    | Lost lives regenerate one at a time, with the countdown next to the hearts.                                |
+| ![Sector map at 20% zoom](docs/screenshots/sector-map.png)                                                                    | ![Sector map at 10% zoom with the export button](docs/screenshots/sector-map-export.png)                   |
+| Zoomed out, every sector becomes one block.                                                                                   | At 10% the whole territory fits on screen and the PNG export appears.                                      |
+| ![Out of lives overlay with a timer](docs/screenshots/out-of-lives.png)                                                       | ![Save conflict dialog comparing the server save and this device](docs/screenshots/save-conflict.png)      |
+| Out of lives: the board locks until a life comes back.                                                                        | Played on two devices? Pick which save wins.                                                               |
+| ![Leaderboard with the signed-in player's rank](docs/screenshots/leaderboard.png)                                             | ![Landing page](docs/screenshots/landing-hero.png)                                                         |
+| Leaderboard, with your own rank pinned on top.                                                                                | Landing page with sign up, sign in, and guest play.                                                        |
+| ![Sign up form with a guest option](docs/screenshots/sign-up.png)                                                             | ![Choosing a nickname, with an availability check](docs/screenshots/onboarding.png)                        |
+| Sign up with email and password, or skip it.                                                                                  | New accounts pick a unique nickname for the leaderboard.                                                   |
+| ![Guest banner and the claim account dialog](docs/screenshots/guest-claim.png)                                                | <img src="docs/screenshots/map-export.png" alt="Exported territory map PNG" width="360">                   |
+| Guests can claim their account at any time without losing progress.                                                           | An exported map, ready to share.                                                                           |
 
 <p align="center">
   <img src="docs/screenshots/mobile-play.png" alt="Gameplay on a phone in reveal mode" width="280">
@@ -45,61 +45,77 @@ Minesweeper on a grid with no edges. Reveal cells, flag mines, and turn 8×8 sec
 
 ## Tech stack
 
-- [TanStack Start](https://tanstack.com/start) with React 19, file-based routing and server functions
+- A static single-page app: React 19 with [TanStack Router](https://tanstack.com/router) file-based routing, built with [Vite](https://vite.dev/)
 - [Tailwind CSS](https://tailwindcss.com/) v4 and [shadcn/ui](https://ui.shadcn.com/) components
 - The board is drawn on a single `<canvas>`. Below 50% zoom it draws one block per sector instead of individual cells
-- [Appwrite](https://appwrite.io/) for accounts (email and password, anonymous guest sessions) and the database: saves, preferences, nicknames, and leaderboard stats
-- [Bun](https://bun.sh/) for installing, running, and the production server (`server.ts`)
+- [Appwrite](https://appwrite.io/) for accounts (email and password, anonymous guest sessions) and the database: saves, preferences, nicknames, and leaderboard stats. The browser talks to Appwrite directly with the [web SDK](https://appwrite.io/docs/sdks)
+- One [Appwrite Function](https://appwrite.io/docs/products/functions) for the writes a player must not do themselves
 
-The game logic lives in [`src/components/minesweeper`](src/components/minesweeper): `useInfiniteGrid.ts` holds the rules (mine placement, flood fill, chording, sectors, lives), `CanvasRenderer.tsx` draws the board, and `MinesweeperGame.tsx` handles input, zoom, saving, and the PNG export. Server functions that talk to Appwrite are in [`src/server/functions`](src/server/functions).
+The game logic lives in [`src/components/minesweeper`](src/components/minesweeper): `useInfiniteGrid.ts` holds the rules (mine placement, flood fill, chording, sectors, lives), `CanvasRenderer.tsx` draws the board, and `MinesweeperGame.tsx` handles input, zoom, saving, and the PNG export. Calls to Appwrite are in [`src/lib/api`](src/lib/api), and the trusted code is in [`functions/game`](functions/game/src/main.js).
+
+### Who can write what
+
+There is no server of our own and no API key in the app. Everything is enforced by Appwrite:
+
+| Table                         | Row ID  | Player can                    | Written by          |
+| ----------------------------- | ------- | ----------------------------- | ------------------- |
+| `minesweeper_saves`           | user ID | read and update their own row | the player          |
+| `user_preferences`            | user ID | read and update their own row | the player          |
+| `user_onboarding` (nicknames) | user ID | read every row                | the `game` function |
+| `user_stats` (leaderboard)    | user ID | read every row                | the `game` function |
+
+No table grants create or delete to players, so nobody can add rows, squat someone else's ID, or post extra leaderboard entries. The `game` function runs as the calling user (Appwrite sets `x-appwrite-user-id`, and clients cannot override `x-appwrite-*` headers):
+
+- `POST /guest` gives a new guest a unique generated nickname and creates their rows.
+- `POST /nickname` validates a nickname (2 to 32 letters, numbers, `_` or `-`), keeps it unique, and creates the rows on first use.
+- On every update of a save row, it recounts the opened tiles from the stored save and writes them to `user_stats`.
 
 ## Running locally
 
-You need [Bun](https://bun.sh/) and an Appwrite project.
+You need [Bun](https://bun.sh/) and an Appwrite project set up from [`appwrite.json`](appwrite.json).
 
 ```bash
 bun install
-cp .env.example .env   # then fill in the values below
-bun run dev            # http://localhost:3000
+cp .env.example .env.local   # then fill in the values below
+bun run dev                  # http://localhost:3000
 ```
 
-| Variable | Description |
-| --- | --- |
-| `APPWRITE_ENDPOINT` | Your Appwrite endpoint, for example `https://cloud.appwrite.io/v1` |
-| `APPWRITE_PROJECT_ID` | Project ID |
-| `APPWRITE_API_KEY` | Server API key with access to auth and databases |
-| `APPWRITE_DB_ID` | Optional, defaults to `imagine-project-db` |
-| `APPWRITE_BUCKET_ID` | Optional, only read by the storage helper in `src/server/lib/storage.ts`, which the game does not use |
-| `VITE_INSTRUMENTATION_SCRIPT_SRC` | Optional analytics script URL |
+| Variable                         | Description                                                            |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| `VITE_APPWRITE_ENDPOINT`         | Your Appwrite endpoint, for example `https://fra.cloud.appwrite.io/v1` |
+| `VITE_APPWRITE_PROJECT_ID`       | Project ID                                                             |
+| `VITE_APPWRITE_DB_ID`            | Optional, defaults to `imagine-project-db`                             |
+| `VITE_APPWRITE_GAME_FUNCTION_ID` | Optional, defaults to `game`                                           |
 
-The database and its four collections (`minesweeper_saves`, `user_preferences`, `user_onboarding`, `user_stats`) are defined in [`appwrite.json`](appwrite.json). Change `projectId` to your project and push them with the [Appwrite CLI](https://appwrite.io/docs/tooling/command-line/installation). The collections have no client permissions on purpose: every read and write goes through server functions using the API key.
+All of these end up in the public bundle, which is fine: they are not secrets. Add `localhost` and your site hostname as Web platforms in the Appwrite project.
+
+[`appwrite.json`](appwrite.json) defines the database, its four tables and the `game` function (Node 22, execute: `users`, scopes `rows.read` and `rows.write`, triggered by `databases.imagine-project-db.tables.minesweeper_saves.rows.*.update`). Change `projectId` to your project and push it with the [Appwrite CLI](https://appwrite.io/docs/tooling/command-line/installation).
 
 Other scripts:
 
 ```bash
-bun run build   # type-check and build into dist/
-bun run start   # serve dist/ with the Bun server in server.ts
+bun run build   # type-check and build the static site into dist/
+bun run start   # preview dist/ locally
 ```
 
 ## Deploying to Appwrite Sites
 
-The live game runs on [Appwrite Sites](https://appwrite.io/products/sites) with these settings:
+The live game is a static site on [Appwrite Sites](https://appwrite.io/products/sites):
 
-| Setting | Value |
-| --- | --- |
-| Framework | TanStack Start, SSR adapter |
-| Runtime | Node 22 |
-| Install command | `npm install --prefix ./.bun-tool --no-audit --no-fund bun@1.3 && node ./.bun-tool/node_modules/bun/install.js && ./.bun-tool/node_modules/.bin/bun install --frozen-lockfile` |
-| Build command | `./.bun-tool/node_modules/.bin/bun run build:node` |
-| Output directory | `./.output` |
-| Variables | `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID`, `APPWRITE_API_KEY`, `APPWRITE_DB_ID` |
+| Setting          | Value                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Framework        | React, static adapter                                                                                                                                                          |
+| Install command  | `npm install --prefix ./.bun-tool --no-audit --no-fund bun@1.3 && node ./.bun-tool/node_modules/bun/install.js && ./.bun-tool/node_modules/.bin/bun install --frozen-lockfile` |
+| Build command    | `./.bun-tool/node_modules/.bin/bun run build`                                                                                                                                  |
+| Output directory | `./dist`                                                                                                                                                                       |
+| Fallback file    | `index.html`                                                                                                                                                                   |
+| Variables        | `VITE_APPWRITE_ENDPOINT`, `VITE_APPWRITE_PROJECT_ID`                                                                                                                           |
 
-Why it looks like this:
+Dependencies come from `bun.lock`. A plain `npm install` resolves newer TanStack packages than the lockfile and can break the build. The Sites build image skips npm install scripts, so the `bun` npm package is installed into `.bun-tool` and its `install.js` is run by hand to link the binary.
 
-- `build:node` builds with the Nitro `node` preset (`FOR_SITES=true` in `vite.config.ts`), which is what the Sites SSR runtime loads from `.output`.
-- Dependencies come from `bun.lock`. A plain `npm install` resolves newer TanStack packages that need Vite 8 and fails. The Sites build image skips npm install scripts, so the `bun` npm package is installed into `.bun-tool` and its `install.js` is run by hand to link the binary.
-- SSR has to run on Node 22. `node-appwrite` 20 fails its requests on Node 24 and newer (`invalid onError method`), and under Bun the Nitro bundle cannot resolve `srvx`.
-- Keep TanStack Start on a patched release (1.168.60 or newer). Appwrite Cloud blocks `/_serverFn/` requests from older clients at the edge because of [CVE-2026-102989](https://tanstack.com/blog/tanstack-start-security-update-cve-2026-102989), which breaks every server function.
+Deploy the function from `functions/game` with `npm install` as its build command.
+
+For the safest sessions, serve the site and the Appwrite API from custom domains on the same registrable domain (for example `minesweeper.example.com` and `appwrite.example.com`). Appwrite then keeps the session in a first-party, httpOnly cookie. On a different domain, browsers that block third-party cookies make the SDK fall back to `localStorage`.
 
 ## Credits
 

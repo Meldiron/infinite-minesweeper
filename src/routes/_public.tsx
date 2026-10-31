@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { authMiddleware } from '@/server/functions/auth'
+import { authMiddleware } from '@/lib/api/auth'
 
 export const Route = createFileRoute('/_public')({
   loader: async () => {

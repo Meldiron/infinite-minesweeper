@@ -1,6 +1,6 @@
-import { type Models } from 'node-appwrite'
+import type { Models } from 'appwrite'
 
-export type MinesweeperSaves = Models.Row & {
+export type MinesweeperSave = Models.Row & {
   createdBy: string
   cellStates: string
   removedMines: string | null
@@ -11,8 +11,8 @@ export type MinesweeperSaves = Models.Row & {
   viewportOffsetY: number | null
   zoomLevel: number | null
   seed: number | null
-  healthRegenTimestamp: string | null
   health: number | null
+  healthRegenTimestamp: string | null
 }
 
 export type UserPreferences = Models.Row & {

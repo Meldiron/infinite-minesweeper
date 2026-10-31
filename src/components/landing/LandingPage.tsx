@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useServerFn } from '@tanstack/react-start'
 import { Button } from '@/components/ui/button'
 import { GuestPlayButton } from '@/components/auth'
 import {
@@ -13,7 +12,7 @@ import {
   Medal,
   Award,
 } from 'lucide-react'
-import { getLeaderboardFn } from '@/server/functions/leaderboard'
+import { getLeaderboardFn } from '@/lib/api/leaderboard'
 
 type LeaderboardEntry = {
   id: string
@@ -25,7 +24,7 @@ export function LandingPage() {
   const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const getLeaderboard = useServerFn(getLeaderboardFn)
+  const getLeaderboard = getLeaderboardFn
 
   useEffect(() => {
     const loadTopPlayers = async () => {

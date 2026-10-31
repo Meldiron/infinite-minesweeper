@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/server/functions/auth'
+import { getCurrentUser } from '@/lib/api/auth'
 import { redirect } from '@tanstack/react-router'
 import { createFileRoute } from '@tanstack/react-router'
 
