@@ -137,8 +137,18 @@ export default async ({ req, res, log, error }) => {
     }
 
     if (tableId === 'minesweeper_saves') {
-      if (await getRow('user_stats', userId)) {
-        await writeStats(userId, { tilesOpened: countRevealed(row.cellStates) })
+      // Also repairs a missing or stale leaderboard row if a nickname event was missed
+      const onboarding = await getRow('user_onboarding', userId)
+      if (
+        onboarding &&
+        ownerOf(onboarding.$permissions) === userId &&
+        onboarding.onboardingCompleted &&
+        NICKNAME_PATTERN.test(onboarding.nickname || '')
+      ) {
+        await writeStats(userId, {
+          nickname: onboarding.nickname,
+          tilesOpened: countRevealed(row.cellStates),
+        })
       }
       return res.json({ stats: 'synced' })
     }
