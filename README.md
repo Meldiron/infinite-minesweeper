@@ -49,26 +49,29 @@ Minesweeper on a grid with no edges. Reveal cells, flag mines, and turn 8×8 sec
 - [Tailwind CSS](https://tailwindcss.com/) v4 and [shadcn/ui](https://ui.shadcn.com/) components
 - The board is drawn on a single `<canvas>`. Below 50% zoom it draws one block per sector instead of individual cells
 - [Appwrite](https://appwrite.io/) for accounts (email and password, anonymous guest sessions) and the database: saves, preferences, nicknames, and leaderboard stats. The browser talks to Appwrite directly with the [web SDK](https://appwrite.io/docs/sdks)
-- One [Appwrite Function](https://appwrite.io/docs/products/functions) for the writes a player must not do themselves
+- One [Appwrite Function](https://appwrite.io/docs/products/functions) that checks rows in the background, so players never wait for it
 
-The game logic lives in [`src/components/minesweeper`](src/components/minesweeper): `useInfiniteGrid.ts` holds the rules (mine placement, flood fill, chording, sectors, lives), `CanvasRenderer.tsx` draws the board, and `MinesweeperGame.tsx` handles input, zoom, saving, and the PNG export. Calls to Appwrite are in [`src/lib/api`](src/lib/api), and the trusted code is in [`functions/game`](functions/game/src/main.js).
+The game logic lives in [`src/components/minesweeper`](src/components/minesweeper): `useInfiniteGrid.ts` holds the rules (mine placement, flood fill, chording, sectors, lives), `CanvasRenderer.tsx` draws the board, and `MinesweeperGame.tsx` handles input, zoom, saving, and the PNG export. Calls to Appwrite are in [`src/lib/api`](src/lib/api), and the background checks are in [`functions/game`](functions/game/src/main.js).
 
 ### Who can write what
 
-There is no server of our own and no API key in the app. Everything is enforced by Appwrite:
+There is no server of our own and no API key in the app. Players read and write their own rows with the web SDK, and Appwrite enforces the rules:
 
-| Table                         | Row ID  | Player can                    | Written by          |
-| ----------------------------- | ------- | ----------------------------- | ------------------- |
-| `minesweeper_saves`           | user ID | read and update their own row | the player          |
-| `user_preferences`            | user ID | read and update their own row | the player          |
-| `user_onboarding` (nicknames) | user ID | read every row                | the `game` function |
-| `user_stats` (leaderboard)    | user ID | read every row                | the `game` function |
+| Table                         | Row ID  | Players can                                     | Leaderboard-relevant checks                                |
+| ----------------------------- | ------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| `minesweeper_saves`           | user ID | create, read and update their own row           | the function recounts tiles from it                        |
+| `user_preferences`            | user ID | create, read and update their own row           | none                                                       |
+| `user_onboarding` (nicknames) | user ID | create and update their own row, read every row | unique index on `nickname`; the function checks the format |
+| `user_stats` (leaderboard)    | user ID | read every row                                  | only the function writes it                                |
 
-No table grants create or delete to players, so nobody can add rows, squat someone else's ID, or post extra leaderboard entries. The `game` function runs as the calling user (Appwrite sets `x-appwrite-user-id`, and clients cannot override `x-appwrite-*` headers):
+A player can only grant permissions to their own user role, so a row whose ID matches the one user in its permissions was created by that user. Nobody can delete rows or write `user_stats`.
 
-- `POST /guest` gives a new guest a unique generated nickname and creates their rows.
-- `POST /nickname` validates a nickname (2 to 32 letters, numbers, `_` or `-`), keeps it unique, and creates the rows on first use.
-- On every update of a save row, it recounts the opened tiles from the stored save and writes them to `user_stats`.
+The [`game` function](functions/game/src/main.js) never sits in the player's way: nobody can call it (its execute list is empty), it only runs on row events, in the background. On every create or update it reads the stored row and:
+
+- deletes rows whose ID does not match their owner (extra rows, attempts to squat someone else's ID),
+- deletes a nickname that breaks the rules (2 to 32 letters, numbers, `_` or `-`), together with that player's leaderboard row,
+- creates or renames the player's leaderboard row for a valid nickname,
+- recounts opened tiles from the stored save after every save.
 
 ## Running locally
 
@@ -80,16 +83,15 @@ cp .env.example .env.local   # then fill in the values below
 bun run dev                  # http://localhost:3000
 ```
 
-| Variable                         | Description                                                            |
-| -------------------------------- | ---------------------------------------------------------------------- |
-| `VITE_APPWRITE_ENDPOINT`         | Your Appwrite endpoint, for example `https://fra.cloud.appwrite.io/v1` |
-| `VITE_APPWRITE_PROJECT_ID`       | Project ID                                                             |
-| `VITE_APPWRITE_DB_ID`            | Optional, defaults to `imagine-project-db`                             |
-| `VITE_APPWRITE_GAME_FUNCTION_ID` | Optional, defaults to `game`                                           |
+| Variable                   | Description                                                            |
+| -------------------------- | ---------------------------------------------------------------------- |
+| `VITE_APPWRITE_ENDPOINT`   | Your Appwrite endpoint, for example `https://fra.cloud.appwrite.io/v1` |
+| `VITE_APPWRITE_PROJECT_ID` | Project ID                                                             |
+| `VITE_APPWRITE_DB_ID`      | Optional, defaults to `imagine-project-db`                             |
 
 All of these end up in the public bundle, which is fine: they are not secrets. Add `localhost` and your site hostname as Web platforms in the Appwrite project.
 
-[`appwrite.json`](appwrite.json) defines the database, its four tables and the `game` function (Node 22, execute: `users`, scopes `rows.read` and `rows.write`, triggered by `databases.imagine-project-db.tables.minesweeper_saves.rows.*.update`). Change `projectId` to your project and push it with the [Appwrite CLI](https://appwrite.io/docs/tooling/command-line/installation).
+[`appwrite.json`](appwrite.json) defines the database, its four tables (with `create("users")` on the three player-owned ones and row security on all of them) and the `game` function (Node 22, no execute permissions, scopes `rows.read` and `rows.write`, triggered by row create and update events). Change `projectId` to your project and push it with the [Appwrite CLI](https://appwrite.io/docs/tooling/command-line/installation).
 
 Other scripts:
 

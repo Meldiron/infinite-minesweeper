@@ -1,8 +1,9 @@
 import { DATABASE_ID, TABLES, tablesDB } from '@/lib/appwrite'
 import { requireUserId } from './auth'
-import type { MinesweeperSave, UserPreferences } from './types'
+import { ensurePreferences, ensureSave } from './rows'
+import type { MinesweeperSave } from './types'
 
-// The save and preferences rows are created by the game function and keyed by user ID.
+// Save and preferences rows are keyed by user ID and created on first use.
 // Players can read and update only their own rows.
 
 type SaveGameInput = {
@@ -39,24 +40,10 @@ function countRevealedCells(cellStatesJson: string): number {
   }
 }
 
-async function getOwnRow<T extends MinesweeperSave | UserPreferences>(
-  tableId: string,
-): Promise<T | null> {
-  const userId = await requireUserId()
-  try {
-    return await tablesDB.getRow<T>({
-      databaseId: DATABASE_ID,
-      tableId,
-      rowId: userId,
-    })
-  } catch {
-    return null
-  }
-}
+const getOwnSave = async () => ensureSave(await requireUserId())
 
 export async function getUserPreferencesFn() {
-  const prefs = await getOwnRow<UserPreferences>(TABLES.preferences)
-  if (!prefs) return { preferences: null }
+  const prefs = await ensurePreferences(await requireUserId())
   return {
     preferences: {
       id: prefs.$id,
@@ -75,7 +62,7 @@ export async function saveUserPreferencesFn({
   data: PreferencesInput
 }) {
   const userId = await requireUserId()
-  const updated = await tablesDB.updateRow<UserPreferences>({
+  const updated = await tablesDB.updateRow({
     databaseId: DATABASE_ID,
     tableId: TABLES.preferences,
     rowId: userId,
@@ -85,8 +72,7 @@ export async function saveUserPreferencesFn({
 }
 
 export async function getGameSaveFn() {
-  const save = await getOwnRow<MinesweeperSave>(TABLES.saves)
-  if (!save) return { save: null }
+  const save = await getOwnSave()
   return {
     save: {
       id: save.$id,
@@ -106,7 +92,7 @@ export async function getGameSaveFn() {
   }
 }
 
-// The leaderboard count is recomputed by the game function from this row.
+// The `game` function recounts the leaderboard tiles from this row in the background.
 export async function saveGameFn({ data }: { data: SaveGameInput }) {
   const userId = await requireUserId()
   const updated = await tablesDB.updateRow<MinesweeperSave>({
@@ -132,7 +118,7 @@ export const forceSaveGameFn = ({
   return saveGameFn({ data: save })
 }
 
-// Players cannot create or delete rows, so a new game empties the save instead.
+// Players cannot delete rows, so a new game empties the save instead.
 export async function deleteGameSaveFn() {
   const userId = await requireUserId()
   await tablesDB.updateRow<MinesweeperSave>({
@@ -162,8 +148,8 @@ export async function checkSaveConflictFn({
 }: {
   data: { lastKnownSaveTime: string | null }
 }) {
-  const save = await getOwnRow<MinesweeperSave>(TABLES.saves)
-  if (!save || !data.lastKnownSaveTime) {
+  const save = await getOwnSave()
+  if (!data.lastKnownSaveTime) {
     return { hasConflict: false, serverSave: null }
   }
   if (

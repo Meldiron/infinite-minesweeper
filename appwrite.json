@@ -10,7 +10,7 @@
   "collections": [
     {
       "$id": "minesweeper_saves",
-      "$permissions": [],
+      "$permissions": ["create(\"users\")"],
       "databaseId": "imagine-project-db",
       "name": "minesweeper_saves",
       "enabled": true,
@@ -132,7 +132,7 @@
     },
     {
       "$id": "user_preferences",
-      "$permissions": [],
+      "$permissions": ["create(\"users\")"],
       "databaseId": "imagine-project-db",
       "name": "user_preferences",
       "enabled": true,
@@ -203,7 +203,7 @@
     },
     {
       "$id": "user_onboarding",
-      "$permissions": [],
+      "$permissions": ["create(\"users\")"],
       "databaseId": "imagine-project-db",
       "name": "user_onboarding",
       "enabled": true,
@@ -315,9 +315,13 @@
       "path": "functions/game",
       "entrypoint": "src/main.js",
       "commands": "npm install",
-      "execute": ["users"],
+      "execute": [],
       "events": [
-        "databases.imagine-project-db.tables.minesweeper_saves.rows.*.update"
+        "databases.imagine-project-db.tables.user_onboarding.rows.*.create",
+        "databases.imagine-project-db.tables.user_onboarding.rows.*.update",
+        "databases.imagine-project-db.tables.minesweeper_saves.rows.*.create",
+        "databases.imagine-project-db.tables.minesweeper_saves.rows.*.update",
+        "databases.imagine-project-db.tables.user_preferences.rows.*.create"
       ],
       "scopes": ["rows.read", "rows.write"],
       "timeout": 15,

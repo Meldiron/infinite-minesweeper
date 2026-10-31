@@ -1,12 +1,24 @@
 import { account } from '@/lib/appwrite'
-import { callGameFunction } from './game-function'
 import { getCurrentUser, isAnonymousUser, resetCurrentUser } from './auth'
+import { guestNickname } from './nicknames'
+import { setNickname } from './onboarding'
 
-// Anonymous session, then the game function picks a free nickname and sets up the rows.
+// Anonymous session, then a free generated nickname. No server round trip besides Appwrite.
 export async function createAnonymousSessionFn() {
   await account.createAnonymousSession()
   resetCurrentUser()
-  return callGameFunction<{ nickname: string }>('/guest')
+  const userId = (await account.get()).$id
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const nickname = guestNickname()
+    try {
+      await setNickname(userId, nickname, attempt === 0)
+      return { nickname }
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('already taken')) continue
+      throw e
+    }
+  }
+  throw new Error('Could not find a free nickname, please try again')
 }
 
 // Adding an email and password turns the guest into a normal account.
