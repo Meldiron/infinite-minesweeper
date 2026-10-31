@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { MinesweeperGame } from '@/components/minesweeper/MinesweeperGame'
 import { ClaimAccountAlert } from '@/components/auth'
@@ -40,7 +40,12 @@ function PlayPage() {
   const [showClaimAlert, setShowClaimAlert] = useState(isAnonymous)
 
   return (
-    <>
+    // While the guest banner is shown, push the top HUD below it so its buttons stay clickable
+    <div
+      style={
+        { '--hud-offset': showClaimAlert ? '2.75rem' : '0px' } as CSSProperties
+      }
+    >
       {showClaimAlert && (
         <ClaimAccountAlert onDismiss={() => setShowClaimAlert(false)} />
       )}
@@ -49,6 +54,6 @@ function PlayPage() {
         initialPreferences={initialPreferences}
         nickname={nickname}
       />
-    </>
+    </div>
   )
 }

@@ -155,7 +155,9 @@ export function GameControls({
   return (
     <div
       className="absolute left-4 right-4 flex flex-col gap-2 pointer-events-none z-10"
-      style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
+      style={{
+        top: 'calc(1rem + env(safe-area-inset-top, 0px) + var(--hud-offset, 0px))',
+      }}
     >
       {/* First row */}
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -462,7 +464,9 @@ export function SaveIndicator({
   return (
     <div
       className="absolute right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-10 hidden md:block"
-      style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
+      style={{
+        top: 'calc(1rem + env(safe-area-inset-top, 0px) + var(--hud-offset, 0px))',
+      }}
     >
       <button
         onClick={onForceSave}
