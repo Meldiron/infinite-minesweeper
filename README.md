@@ -72,7 +72,7 @@ bun run dev            # http://localhost:3000
 | `APPWRITE_BUCKET_ID` | Optional, only read by the storage helper in `src/server/lib/storage.ts`, which the game does not use |
 | `VITE_INSTRUMENTATION_SCRIPT_SRC` | Optional analytics script URL |
 
-The database and its four collections (`minesweeper_saves`, `user_preferences`, `user_onboarding`, `user_stats`) are defined in [`appwrite.json`](appwrite.json). Change `projectId` to your project and push them with the [Appwrite CLI](https://appwrite.io/docs/tooling/command-line/installation).
+The database and its four collections (`minesweeper_saves`, `user_preferences`, `user_onboarding`, `user_stats`) are defined in [`appwrite.json`](appwrite.json). Change `projectId` to your project and push them with the [Appwrite CLI](https://appwrite.io/docs/tooling/command-line/installation). The collections have no client permissions on purpose: every read and write goes through server functions using the API key.
 
 Other scripts:
 
@@ -80,6 +80,26 @@ Other scripts:
 bun run build   # type-check and build into dist/
 bun run start   # serve dist/ with the Bun server in server.ts
 ```
+
+## Deploying to Appwrite Sites
+
+The live game runs on [Appwrite Sites](https://appwrite.io/products/sites) with these settings:
+
+| Setting | Value |
+| --- | --- |
+| Framework | TanStack Start, SSR adapter |
+| Runtime | Node 22 |
+| Install command | `npm install --prefix ./.bun-tool --no-audit --no-fund bun@1.3 && node ./.bun-tool/node_modules/bun/install.js && ./.bun-tool/node_modules/.bin/bun install --frozen-lockfile` |
+| Build command | `./.bun-tool/node_modules/.bin/bun run build:node` |
+| Output directory | `./.output` |
+| Variables | `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID`, `APPWRITE_API_KEY`, `APPWRITE_DB_ID` |
+
+Why it looks like this:
+
+- `build:node` builds with the Nitro `node` preset (`FOR_SITES=true` in `vite.config.ts`), which is what the Sites SSR runtime loads from `.output`.
+- Dependencies come from `bun.lock`. A plain `npm install` resolves newer TanStack packages that need Vite 8 and fails. The Sites build image skips npm install scripts, so the `bun` npm package is installed into `.bun-tool` and its `install.js` is run by hand to link the binary.
+- SSR has to run on Node 22. `node-appwrite` 20 fails its requests on Node 24 and newer (`invalid onError method`), and under Bun the Nitro bundle cannot resolve `srvx`.
+- Keep TanStack Start on a patched release (1.168.60 or newer). Appwrite Cloud blocks `/_serverFn/` requests from older clients at the edge because of [CVE-2026-102989](https://tanstack.com/blog/tanstack-start-security-update-cve-2026-102989), which breaks every server function.
 
 ## Credits
 

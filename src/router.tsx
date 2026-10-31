@@ -15,7 +15,11 @@ export const getRouter = () => {
     context: { ...rqContext },
     defaultPreload: 'intent',
     defaultErrorComponent: ({ error, info, reset }) => (
-      <ErrorComponent error={error} info={info} reset={reset} />
+      <ErrorComponent
+        error={error instanceof Error ? error : new Error(String(error))}
+        info={info}
+        reset={reset}
+      />
     ),
     Wrap: (props: { children: React.ReactNode }) => {
       return (

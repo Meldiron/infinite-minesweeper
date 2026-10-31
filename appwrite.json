@@ -1,21 +1,16 @@
 {
-  "projectId": "6948120100174c6a021b",
+  "projectId": "infinite-minesweeper",
   "databases": [
     {
       "$id": "imagine-project-db",
-      "name": "Imagine Project DB",
+      "name": "Infinite Minesweeper",
       "enabled": true
     }
   ],
   "collections": [
     {
       "$id": "minesweeper_saves",
-      "$permissions": [
-        "create(\"any\")",
-        "read(\"any\")",
-        "update(\"any\")",
-        "delete(\"any\")"
-      ],
+      "$permissions": [],
       "databaseId": "imagine-project-db",
       "name": "minesweeper_saves",
       "enabled": true,
@@ -137,12 +132,7 @@
     },
     {
       "$id": "user_preferences",
-      "$permissions": [
-        "create(\"any\")",
-        "read(\"any\")",
-        "update(\"any\")",
-        "delete(\"any\")"
-      ],
+      "$permissions": [],
       "databaseId": "imagine-project-db",
       "name": "user_preferences",
       "enabled": true,
@@ -213,12 +203,7 @@
     },
     {
       "$id": "user_onboarding",
-      "$permissions": [
-        "create(\"any\")",
-        "read(\"any\")",
-        "update(\"any\")",
-        "delete(\"any\")"
-      ],
+      "$permissions": [],
       "databaseId": "imagine-project-db",
       "name": "user_onboarding",
       "enabled": true,
@@ -269,12 +254,7 @@
     },
     {
       "$id": "user_stats",
-      "$permissions": [
-        "create(\"any\")",
-        "read(\"any\")",
-        "update(\"any\")",
-        "delete(\"any\")"
-      ],
+      "$permissions": [],
       "databaseId": "imagine-project-db",
       "name": "user_stats",
       "enabled": true,
@@ -325,5 +305,6 @@
         }
       ]
     }
-  ]
+  ],
+  "projectName": "Infinite Minesweeper"
 }

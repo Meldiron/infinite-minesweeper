@@ -9,30 +9,66 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PublicRouteImport } from './routes/_public'
-import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as ProtectedRouteImport } from './routes/_protected'
+import { Route as PublicRouteImport } from './routes/_public'
+import { Route as ApiHelloRouteImport } from './routes/_api/hello'
+import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
+import { Route as AuthSignOutRouteImport } from './routes/_auth/sign-out'
+import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
+import { Route as ProtectedExampleProtectedRouteRouteImport } from './routes/_protected/example-protected-route'
+import { Route as ProtectedOnboardingRouteImport } from './routes/_protected/onboarding'
+import { Route as ProtectedPlayRouteImport } from './routes/_protected/play'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicLeaderboardRouteImport } from './routes/_public/leaderboard'
-import { Route as ProtectedPlayRouteImport } from './routes/_protected/play'
-import { Route as ProtectedOnboardingRouteImport } from './routes/_protected/onboarding'
-import { Route as ProtectedExampleProtectedRouteRouteImport } from './routes/_protected/example-protected-route'
-import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
-import { Route as AuthSignOutRouteImport } from './routes/_auth/sign-out'
-import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
-import { Route as ApiHelloRouteImport } from './routes/_api/hello'
 
-const PublicRoute = PublicRouteImport.update({
-  id: '/_public',
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/_auth',
+const PublicRoute = PublicRouteImport.update({
+  id: '/_public',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHelloRoute = ApiHelloRouteImport.update({
+  id: '/_api/hello',
+  path: '/hello',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSignInRoute = AuthSignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSignOutRoute = AuthSignOutRouteImport.update({
+  id: '/sign-out',
+  path: '/sign-out',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => AuthRoute,
+} as any)
+const ProtectedExampleProtectedRouteRoute =
+  ProtectedExampleProtectedRouteRouteImport.update({
+    id: '/example-protected-route',
+    path: '/example-protected-route',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedOnboardingRoute = ProtectedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedPlayRoute = ProtectedPlayRouteImport.update({
+  id: '/play',
+  path: '/play',
+  getParentRoute: () => ProtectedRoute,
 } as any)
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
@@ -44,44 +80,9 @@ const PublicLeaderboardRoute = PublicLeaderboardRouteImport.update({
   path: '/leaderboard',
   getParentRoute: () => PublicRoute,
 } as any)
-const ProtectedPlayRoute = ProtectedPlayRouteImport.update({
-  id: '/play',
-  path: '/play',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedOnboardingRoute = ProtectedOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedExampleProtectedRouteRoute =
-  ProtectedExampleProtectedRouteRouteImport.update({
-    id: '/example-protected-route',
-    path: '/example-protected-route',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const AuthSignUpRoute = AuthSignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthSignOutRoute = AuthSignOutRouteImport.update({
-  id: '/sign-out',
-  path: '/sign-out',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthSignInRoute = AuthSignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => AuthRoute,
-} as any)
-const ApiHelloRoute = ApiHelloRouteImport.update({
-  id: '/_api/hello',
-  path: '/hello',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof PublicIndexRoute
   '/hello': typeof ApiHelloRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-out': typeof AuthSignOutRoute
@@ -90,9 +91,9 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof ProtectedOnboardingRoute
   '/play': typeof ProtectedPlayRoute
   '/leaderboard': typeof PublicLeaderboardRoute
-  '/': typeof PublicIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof PublicIndexRoute
   '/hello': typeof ApiHelloRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-out': typeof AuthSignOutRoute
@@ -101,7 +102,6 @@ export interface FileRoutesByTo {
   '/onboarding': typeof ProtectedOnboardingRoute
   '/play': typeof ProtectedPlayRoute
   '/leaderboard': typeof PublicLeaderboardRoute
-  '/': typeof PublicIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -121,6 +121,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/hello'
     | '/sign-in'
     | '/sign-out'
@@ -129,9 +130,9 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/play'
     | '/leaderboard'
-    | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/hello'
     | '/sign-in'
     | '/sign-out'
@@ -140,7 +141,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/play'
     | '/leaderboard'
-    | '/'
   id:
     | '__root__'
     | '/_auth'
@@ -166,26 +166,75 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_public': {
-      id: '/_public'
+    '/_auth': {
+      id: '/_auth'
       path: ''
-      fullPath: ''
-      preLoaderRoute: typeof PublicRouteImport
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected': {
       id: '/_protected'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof ProtectedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth': {
-      id: '/_auth'
+    '/_public': {
+      id: '/_public'
       path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthRouteImport
+      fullPath: '/'
+      preLoaderRoute: typeof PublicRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_api/hello': {
+      id: '/_api/hello'
+      path: '/hello'
+      fullPath: '/hello'
+      preLoaderRoute: typeof ApiHelloRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/sign-in': {
+      id: '/_auth/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof AuthSignInRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/sign-out': {
+      id: '/_auth/sign-out'
+      path: '/sign-out'
+      fullPath: '/sign-out'
+      preLoaderRoute: typeof AuthSignOutRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/sign-up': {
+      id: '/_auth/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof AuthSignUpRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_protected/example-protected-route': {
+      id: '/_protected/example-protected-route'
+      path: '/example-protected-route'
+      fullPath: '/example-protected-route'
+      preLoaderRoute: typeof ProtectedExampleProtectedRouteRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/onboarding': {
+      id: '/_protected/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof ProtectedOnboardingRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/play': {
+      id: '/_protected/play'
+      path: '/play'
+      fullPath: '/play'
+      preLoaderRoute: typeof ProtectedPlayRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_public/': {
       id: '/_public/'
@@ -200,55 +249,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/leaderboard'
       preLoaderRoute: typeof PublicLeaderboardRouteImport
       parentRoute: typeof PublicRoute
-    }
-    '/_protected/play': {
-      id: '/_protected/play'
-      path: '/play'
-      fullPath: '/play'
-      preLoaderRoute: typeof ProtectedPlayRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/onboarding': {
-      id: '/_protected/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof ProtectedOnboardingRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/example-protected-route': {
-      id: '/_protected/example-protected-route'
-      path: '/example-protected-route'
-      fullPath: '/example-protected-route'
-      preLoaderRoute: typeof ProtectedExampleProtectedRouteRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_auth/sign-up': {
-      id: '/_auth/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof AuthSignUpRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/sign-out': {
-      id: '/_auth/sign-out'
-      path: '/sign-out'
-      fullPath: '/sign-out'
-      preLoaderRoute: typeof AuthSignOutRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/sign-in': {
-      id: '/_auth/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof AuthSignInRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_api/hello': {
-      id: '/_api/hello'
-      path: '/hello'
-      fullPath: '/hello'
-      preLoaderRoute: typeof ApiHelloRouteImport
-      parentRoute: typeof rootRouteImport
     }
   }
 }
